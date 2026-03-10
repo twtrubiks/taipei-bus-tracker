@@ -10,16 +10,20 @@ import (
 	"github.com/twtrubiks/taipei-bus-tracker/internal/model"
 )
 
+var errUpstream = fmt.Errorf("upstream error")
+
 type mockProvider struct {
-	etas []model.StopETA
-	err  error
+	routes []model.Route
+	stops  []model.Stop
+	etas   []model.StopETA
+	err    error
 }
 
 func (m *mockProvider) SearchRoutes(_ context.Context, _, _ string) ([]model.Route, error) {
-	return nil, nil
+	return m.routes, m.err
 }
 func (m *mockProvider) GetStops(_ context.Context, _, _ string, _ int) ([]model.Stop, error) {
-	return nil, nil
+	return m.stops, m.err
 }
 func (m *mockProvider) GetETA(_ context.Context, _, _ string, _ int) ([]model.StopETA, error) {
 	return m.etas, m.err

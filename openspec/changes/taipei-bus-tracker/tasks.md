@@ -24,16 +24,16 @@
 
 ## 3. Go 後端 - API 與快取
 
-- [ ] 3.1 [TDD] 先寫 cache 測試：Set/Get、TTL 過期、並發安全
-- [ ] 3.2 實作 in-memory cache（sync.Map + TTL 10 秒）
-- [ ] 3.3 [TDD] 先寫 ETA 狀態轉換測試：eta=300→"約5分"、eta=60→"進站中"、eta=-1→"未發車"、eta=-2→"末班車已駛離"、eta=-3→"交管不停靠"、eta=-4→"未營運"
-- [ ] 3.4 實作 `GET /api/routes/search` handler
-- [ ] 3.5 實作 `GET /api/routes/{routeId}/stops` handler
-- [ ] 3.6 實作 `GET /api/routes/{routeId}/eta` handler，包含 ETA → status 字串轉換
-- [ ] 3.7 補寫 API handler 測試：驗證 status code + response JSON 格式（httptest）
-- [ ] 3.8 實作統一錯誤回應格式和 HTTP status code
-- [ ] 3.9 實作靜態檔案 serve + SPA fallback（非 /api/* 路由回傳 index.html）
-- [ ] 3.10 串接 main.go：載入 config → 初始化 providers → 啟動 HTTP server
+- [x] 3.1 [TDD] 先寫 cache 測試：Set/Get、TTL 過期、並發安全
+- [x] 3.2 實作 in-memory cache（sync.Map + TTL 10 秒）
+- [x] 3.3 [TDD] 先寫 ETA 狀態轉換測試：eta=300→"約5分"、eta=60→"進站中"、eta=-1→"未發車"、eta=-2→"末班車已駛離"、eta=-3→"交管不停靠"、eta=-4→"未營運"
+- [x] 3.4 實作 `GET /api/routes/search` handler
+- [x] 3.5 實作 `GET /api/routes/{routeId}/stops` handler
+- [x] 3.6 實作 `GET /api/routes/{routeId}/eta` handler，包含 ETA → status 字串轉換
+- [x] 3.7 補寫 API handler 測試：驗證 status code + response JSON 格式（httptest）
+- [x] 3.8 實作統一錯誤回應格式和 HTTP status code
+- [x] 3.9 實作靜態檔案 serve + SPA fallback（非 /api/* 路由回傳 index.html）
+- [x] 3.10 串接 main.go：載入 config → 初始化 providers → 啟動 HTTP server
 
 ## 4. React PWA 前端 - 核心頁面
 
