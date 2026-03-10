@@ -12,17 +12,17 @@
 
 ## 3. ETA 監控迴圈
 
-- [ ] 3.2a 撰寫 `calcInterval` 純函式的 table-driven 測試（TDD：先寫測試）
-- [ ] 3.2b 實作 `calcInterval(eta, threshold) → time.Duration` 純函式，通過測試
-- [ ] 3.3a 撰寫 ETA 跳變去重狀態機的 table-driven 測試（TDD：先寫測試），覆蓋：正常到站、兩班車依序、不重複通知、ETA 波動不誤觸、未發車/末班駛離重設
-- [ ] 3.3b 實作跳變去重邏輯（`wasAboveThreshold` 狀態追蹤），通過測試
-- [ ] 3.1 實作 polling 迴圈：用 `time.Ticker` + `context.WithCancel`，定期呼叫 GetETA 取得目標站點 ETA，整合 3.2b + 3.3b
-- [ ] 3.4 實作逐行 log 輸出：每次 poll 輸出時間戳 + ETA + 通知標記
+- [x] 3.2a 撰寫 `calcInterval` 純函式的 table-driven 測試（TDD：先寫測試）
+- [x] 3.2b 實作 `calcInterval(eta, threshold) → time.Duration` 純函式，通過測試
+- [x] 3.3a 撰寫 ETA 跳變去重狀態機的 table-driven 測試（TDD：先寫測試），覆蓋：正常到站、兩班車依序、不重複通知、ETA 波動不誤觸、未發車/末班駛離重設
+- [x] 3.3b 實作跳變去重邏輯（`wasAboveThreshold` 狀態追蹤），通過測試
+- [x] 3.1 實作 polling 迴圈：用 `time.Ticker` + `context.WithCancel`，定期呼叫 GetETA 取得目標站點 ETA，整合 3.2b + 3.3b
+- [x] 3.4 實作逐行 log 輸出：每次 poll 輸出時間戳 + ETA + 通知標記
 
 ## 4. 桌面通知
 
-- [ ] 4.1 實作通知發送：根據 `detectNotifyTool` 結果，使用 `notify-send`（urgency=critical）或 `kdialog`（passivepopup）發送通知，含路線名和站名
-- [ ] 4.2 處理通知指令執行失敗：log 錯誤但不中斷監控
+- [x] 4.1 實作通知發送：根據 `detectNotifyTool` 結果，使用 `notify-send`（urgency=critical）或 `kdialog`（passivepopup）發送通知，含路線名和站名
+- [x] 4.2 處理通知指令執行失敗：log 錯誤但不中斷監控
 
 ## 5. 生命週期管理
 

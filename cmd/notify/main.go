@@ -70,24 +70,22 @@ func main() {
 
 	threshold := selectThreshold(scanner)
 
-	dirName := "去程"
+	dirLabel := fmt.Sprintf("去程：%s→%s", route.StartStop, route.EndStop)
 	if direction == 1 {
-		dirName = "回程"
+		dirLabel = fmt.Sprintf("回程：%s→%s", route.EndStop, route.StartStop)
 	}
 
 	notifyCmd := detectNotifyTool()
+	detectSoundTool()
 
 	fmt.Printf("\n✓ 監控中 %s %s（%s），%d 分鐘前通知  Ctrl+C 停止\n",
-		route.Name, stop.Name, dirName, threshold)
+		route.Name, stop.Name, dirLabel, threshold)
 	if notifyCmd == "" {
 		fmt.Println("⚠ 未偵測到通知工具，僅 terminal 顯示模式")
 	}
 	fmt.Println("─────────────────────────────────────────────")
 
-	// TODO: Tasks 3-5 - monitoring loop, notification, signal handling
-	_ = threshold
-	_ = notifyCmd
-	_ = stop
+	runMonitor(ctx, svc, route.RouteID, direction, stop, route.Name, threshold, notifyCmd)
 }
 
 // detectNotifyTool returns the notification command to use:
