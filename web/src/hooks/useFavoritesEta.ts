@@ -11,10 +11,18 @@ export interface FavoriteETA {
 
 /**
  * Fetches ETA data for a list of favorites by batching requests per route+direction.
+ * Optional onEtaFetched callback is invoked per route+direction with fresh ETA data.
  */
-export function useFavoritesEta(favorites: Favorite[]): FavoriteETA[] {
+export function useFavoritesEta(
+  favorites: Favorite[],
+  onEtaFetched?: (routeId: string, direction: number, stops: StopETA[]) => void,
+): FavoriteETA[] {
   const [etaMap, setEtaMap] = useState<Map<string, StopETA>>(new Map());
   const timerRef = useRef<ReturnType<typeof setInterval>>();
+  const onEtaFetchedRef = useRef(onEtaFetched);
+  useEffect(() => {
+    onEtaFetchedRef.current = onEtaFetched;
+  });
 
   // Derive unique route+direction combos
   const routeKeys = useMemo(() => {
@@ -46,6 +54,7 @@ export function useFavoritesEta(favorites: Favorite[]): FavoriteETA[] {
           for (const stop of result.value.stops) {
             newMap.set(`${rk.routeId}:${rk.direction}:${stop.stopId}`, stop);
           }
+          onEtaFetchedRef.current?.(rk.routeId, rk.direction, result.value.stops);
         }
       });
       // Only update state if data actually changed to avoid unnecessary re-renders

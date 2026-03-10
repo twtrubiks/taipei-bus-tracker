@@ -6,13 +6,13 @@ import DirectionSelector from "../components/DirectionSelector";
 import StopList from "../components/StopList";
 import { useEta } from "../hooks/useEta";
 import { useFavorites } from "../hooks/useFavorites";
-import { useNotification } from "../hooks/useNotification";
+import { useNotificationContext } from "../hooks/NotificationContext";
 
 export default function RoutePage() {
   const { routeId } = useParams<{ routeId: string }>();
   const [searchParams] = useSearchParams();
   const routeName = searchParams.get("name") ?? routeId ?? "";
-  const [direction, setDirection] = useState(0);
+  const [direction, setDirection] = useState(searchParams.get("dir") === "1" ? 1 : 0);
   const [stops, setStops] = useState<Stop[]>([]);
   const [loadedKey, setLoadedKey] = useState("");
 
@@ -22,7 +22,7 @@ export default function RoutePage() {
   const { data: etaData, error: etaError } = useEta(routeId ?? "", direction);
   const { addFavorite, removeFavorite, isFavorite } = useFavorites();
   const { addAlert, removeAlert, getAlert, checkAlerts, permissionDenied } =
-    useNotification();
+    useNotificationContext();
 
   // Check notification alerts whenever ETA data updates
   useEffect(() => {
@@ -51,22 +51,28 @@ export default function RoutePage() {
 
   if (!routeId) return null;
 
+  const toFavorite = (stop: Stop) => ({
+    routeId,
+    routeName,
+    direction,
+    stopId: stop.stopId,
+    stopName: stop.stopName,
+    sequence: stop.sequence,
+  });
+
   const handleToggleFavorite = (stop: Stop) => {
     if (isFavorite(routeId, direction, stop.stopId)) {
       removeFavorite(routeId, direction, stop.stopId);
     } else {
-      addFavorite({
-        routeId,
-        routeName,
-        direction,
-        stopId: stop.stopId,
-        stopName: stop.stopName,
-        sequence: stop.sequence,
-      });
+      addFavorite(toFavorite(stop));
     }
   };
 
   const handleSetAlert = (stop: Stop, minutes: number) => {
+    // Auto-favorite so homepage polling can trigger the notification
+    if (!isFavorite(routeId, direction, stop.stopId)) {
+      addFavorite(toFavorite(stop));
+    }
     addAlert({
       routeId,
       routeName,

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useNotification } from "./useNotification";
+import { setupMockNotification } from "../test/mockNotification";
 import type { StopETA } from "../api/types";
 
 const mockEta = (stopId: string, eta: number): StopETA => ({
@@ -26,22 +27,7 @@ let notificationSpy: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   localStorage.clear();
-  notificationSpy = vi.fn();
-
-  // Mock Notification API using a class so `new Notification(...)` works
-  class MockNotification {
-    static permission = "granted";
-    static requestPermission = vi.fn().mockResolvedValue("granted");
-    constructor(...args: unknown[]) {
-      (notificationSpy as (...a: unknown[]) => void)(...args);
-    }
-  }
-
-  Object.defineProperty(window, "Notification", {
-    writable: true,
-    configurable: true,
-    value: MockNotification,
-  });
+  notificationSpy = setupMockNotification();
 });
 
 describe("useNotification", () => {
@@ -96,16 +82,7 @@ describe("useNotification", () => {
   });
 
   it("shows permissionDenied when permission is denied", async () => {
-    class DeniedNotification {
-      static permission = "default";
-      static requestPermission = vi.fn().mockResolvedValue("denied");
-      constructor() {}
-    }
-    Object.defineProperty(window, "Notification", {
-      writable: true,
-      configurable: true,
-      value: DeniedNotification,
-    });
+    setupMockNotification("default", "denied");
 
     const { result } = renderHook(() => useNotification());
 

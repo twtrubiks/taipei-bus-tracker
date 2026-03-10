@@ -1,11 +1,13 @@
 import { Link } from "react-router-dom";
 import { useFavorites } from "../hooks/useFavorites";
 import { useFavoritesEta } from "../hooks/useFavoritesEta";
+import { useNotificationContext } from "../hooks/NotificationContext";
 import { statusColor } from "../utils/statusColor";
 
 export default function HomePage() {
   const { favorites, removeFavorite } = useFavorites();
-  const favoritesEta = useFavoritesEta(favorites);
+  const { checkAlerts } = useNotificationContext();
+  const favoritesEta = useFavoritesEta(favorites, checkAlerts);
 
   return (
     <div className="mx-auto max-w-lg p-4 md:max-w-2xl">
@@ -28,7 +30,7 @@ export default function HomePage() {
                 className="flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 dark:border-gray-700"
               >
                 <Link
-                  to={`/route/${f.routeId}?name=${encodeURIComponent(f.routeName)}`}
+                  to={`/route/${f.routeId}?name=${encodeURIComponent(f.routeName)}&dir=${f.direction}`}
                   className="flex flex-1 items-center gap-2"
                 >
                   <span className="rounded bg-blue-100 px-2 py-0.5 text-sm font-semibold text-blue-700 dark:bg-blue-900 dark:text-blue-300">
