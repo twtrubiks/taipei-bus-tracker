@@ -23,6 +23,7 @@ export function useEta(routeId: string, direction: number) {
         })
         .catch((err) => {
           if (!cancelled) {
+            // Keep previous data visible; only set error indicator
             setError(err instanceof Error ? err : new Error(String(err)));
           }
         });

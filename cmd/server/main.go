@@ -40,7 +40,7 @@ func main() {
 		log.Println("Using eBus as primary provider (no TDX credentials)")
 	}
 
-	c := cache.New(10 * time.Second)
+	c := cache.New(30 * time.Second)
 	defer c.Close()
 
 	h := handler.NewHandlers(primary, fallback, c)

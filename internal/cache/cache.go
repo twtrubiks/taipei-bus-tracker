@@ -23,7 +23,7 @@ func New(ttl time.Duration) *Cache {
 		ttl:  ttl,
 		stop: make(chan struct{}),
 	}
-	go c.cleanup(ttl * 5)
+	go c.cleanup(ttl * 3)
 	return c
 }
 
@@ -39,6 +39,19 @@ func (c *Cache) Get(key string) (any, bool) {
 	c.mu.RUnlock()
 
 	if !ok || time.Now().After(e.expiresAt) {
+		return nil, false
+	}
+	return e.value, true
+}
+
+// GetStale returns cached data even if expired (but not yet cleaned up).
+// Useful as last-resort fallback when all upstream APIs fail.
+func (c *Cache) GetStale(key string) (any, bool) {
+	c.mu.RLock()
+	e, ok := c.data[key]
+	c.mu.RUnlock()
+
+	if !ok {
 		return nil, false
 	}
 	return e.value, true
