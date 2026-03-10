@@ -57,12 +57,12 @@ export default function StopList({
         return (
           <li key={stop.sequence} className="py-3">
             <div className="flex items-center gap-3">
-              <span className="w-6 text-center text-xs text-gray-400">
+              <span className="w-6 shrink-0 text-center text-xs text-gray-400">
                 {stop.sequence}
               </span>
-              <span className="flex-1">{stop.stopName}</span>
-              <div className="text-right">
-                <span className={`text-sm ${statusColor(eta?.eta ?? -999)}`}>
+              <span className="min-w-0 flex-1 truncate" title={stop.stopName}>{stop.stopName}</span>
+              <div className="shrink-0 text-right">
+                <span className={`text-sm font-medium ${statusColor(eta?.eta ?? -999)}`}>
                   {eta?.status ?? "—"}
                 </span>
                 {eta?.buses && eta.buses.length > 0 && (

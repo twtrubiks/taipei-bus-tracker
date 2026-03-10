@@ -8,11 +8,11 @@ export default function HomePage() {
   const favoritesEta = useFavoritesEta(favorites);
 
   return (
-    <div className="mx-auto max-w-lg p-4">
+    <div className="mx-auto max-w-lg p-4 md:max-w-2xl">
       <h1 className="mb-6 text-2xl font-bold">公車到站查詢</h1>
       <Link
         to="/search"
-        className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-white shadow hover:bg-blue-700"
+        className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-white shadow hover:bg-blue-700"
       >
         <span className="text-xl">&#128269;</span>
         搜尋路線
@@ -21,11 +21,11 @@ export default function HomePage() {
       {favorites.length > 0 && (
         <section className="mt-6">
           <h2 className="mb-3 text-lg font-semibold">收藏站點</h2>
-          <ul className="divide-y divide-gray-200 rounded-lg border border-gray-200 dark:divide-gray-700 dark:border-gray-700" role="list">
+          <ul className="grid grid-cols-1 gap-3 md:grid-cols-2" role="list">
             {favoritesEta.map(({ favorite: f, eta }) => (
               <li
                 key={`${f.routeId}:${f.direction}:${f.stopId}`}
-                className="flex items-center gap-3 px-4 py-3"
+                className="flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 dark:border-gray-700"
               >
                 <Link
                   to={`/route/${f.routeId}?name=${encodeURIComponent(f.routeName)}`}

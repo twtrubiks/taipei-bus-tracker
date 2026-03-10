@@ -82,7 +82,7 @@ export default function RoutePage() {
   };
 
   return (
-    <div className="mx-auto max-w-lg p-4">
+    <div className="mx-auto max-w-lg p-4 md:max-w-2xl">
       <div className="mb-4 flex items-center gap-2">
         <Link to="/search" className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
           &larr; 搜尋
@@ -118,11 +118,7 @@ export default function RoutePage() {
           direction={direction}
           isFavorite={isFavorite}
           onToggleFavorite={handleToggleFavorite}
-          getAlert={
-            routeId
-              ? (stopId: string) => getAlert(routeId, direction, stopId)
-              : undefined
-          }
+          getAlert={(stopId: string) => getAlert(routeId, direction, stopId)}
           onSetAlert={handleSetAlert}
           onRemoveAlert={handleRemoveAlert}
         />

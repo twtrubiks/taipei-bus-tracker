@@ -65,9 +65,9 @@
 
 ## 6. React PWA 前端 - Responsive 與 PWA
 
-- [ ] 6.1 Responsive 排版：桌面寬版 (>768px) + 手機窄版 (≤768px)
-- [ ] 6.2 設定 PWA manifest.json（name、icons、display: standalone、theme_color）
-- [ ] 6.3 設定 Service Worker（Workbox）：快取靜態資源，API 走網路
+- [x] 6.1 Responsive 排版：桌面寬版 (>768px) + 手機窄版 (≤768px)
+- [x] 6.2 設定 PWA manifest.json（name、icons、display: standalone、theme_color）
+- [x] 6.3 設定 Service Worker（Workbox）：快取靜態資源，API 走網路
 
 ## 7. 部署
 

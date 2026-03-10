@@ -10,7 +10,10 @@ export default function App() {
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100">
-        <header className="flex items-center justify-end px-4 py-2">
+        <header className="mx-auto flex max-w-lg items-center justify-between px-4 py-2 md:max-w-2xl">
+          <span className="text-sm font-medium text-gray-400 dark:text-gray-500">
+            Taipei Bus Tracker
+          </span>
           <button
             type="button"
             onClick={toggle}

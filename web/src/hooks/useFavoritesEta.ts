@@ -66,6 +66,7 @@ export function useFavoritesEta(favorites: Favorite[]): FavoriteETA[] {
       if (document.visibilityState === "hidden") {
         clearInterval(timerRef.current);
       } else {
+        clearInterval(timerRef.current);
         doFetch();
         timerRef.current = setInterval(doFetch, POLL_INTERVAL);
       }

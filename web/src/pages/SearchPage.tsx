@@ -3,7 +3,7 @@ import RouteSearch from "../components/RouteSearch";
 
 export default function SearchPage() {
   return (
-    <div className="mx-auto max-w-lg p-4">
+    <div className="mx-auto max-w-lg p-4 md:max-w-2xl">
       <div className="mb-4 flex items-center gap-2">
         <Link to="/" className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
           &larr; 返回
