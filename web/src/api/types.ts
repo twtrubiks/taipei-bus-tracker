@@ -32,3 +32,12 @@ export interface ETAResponse {
   updatedAt: string;
   stops: StopETA[];
 }
+
+export interface Favorite {
+  routeId: string;
+  routeName: string;
+  direction: number;
+  stopId: string;
+  stopName: string;
+  sequence: number;
+}

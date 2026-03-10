@@ -41,7 +41,7 @@ export default function RouteSearch() {
         placeholder="輸入路線名稱，例如 299"
         value={query}
         onChange={handleChange}
-        className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none"
+        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
         aria-label="搜尋路線"
       />
 
@@ -52,13 +52,13 @@ export default function RouteSearch() {
       )}
 
       {results.length > 0 && (
-        <ul className="mt-2 divide-y rounded-lg border" role="list">
+        <ul className="mt-2 divide-y divide-gray-200 rounded-lg border border-gray-200 dark:divide-gray-700 dark:border-gray-700" role="list">
           {results.map((route) => (
             <li key={route.routeId}>
               <button
                 type="button"
-                className="w-full px-4 py-3 text-left hover:bg-gray-50"
-                onClick={() => navigate(`/route/${route.routeId}`)}
+                className="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800"
+                onClick={() => navigate(`/route/${route.routeId}?name=${encodeURIComponent(route.routeName)}`)}
               >
                 <span className="font-semibold">{route.routeName}</span>
                 <span className="ml-2 text-sm text-gray-500">

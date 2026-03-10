@@ -77,7 +77,7 @@ describe("RouteSearch", () => {
     await waitFor(() => expect(screen.getByText("1")).toBeInTheDocument());
 
     await user.click(screen.getByText("1"));
-    expect(mockNavigate).toHaveBeenCalledWith("/route/0100000100");
+    expect(mockNavigate).toHaveBeenCalledWith("/route/0100000100?name=1");
   });
 
   it("shows no results message when search returns empty", async () => {

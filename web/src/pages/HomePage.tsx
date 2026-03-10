@@ -1,6 +1,12 @@
 import { Link } from "react-router-dom";
+import { useFavorites } from "../hooks/useFavorites";
+import { useFavoritesEta } from "../hooks/useFavoritesEta";
+import { statusColor } from "../utils/statusColor";
 
 export default function HomePage() {
+  const { favorites, removeFavorite } = useFavorites();
+  const favoritesEta = useFavoritesEta(favorites);
+
   return (
     <div className="mx-auto max-w-lg p-4">
       <h1 className="mb-6 text-2xl font-bold">公車到站查詢</h1>
@@ -11,6 +17,53 @@ export default function HomePage() {
         <span className="text-xl">&#128269;</span>
         搜尋路線
       </Link>
+
+      {favorites.length > 0 && (
+        <section className="mt-6">
+          <h2 className="mb-3 text-lg font-semibold">收藏站點</h2>
+          <ul className="divide-y divide-gray-200 rounded-lg border border-gray-200 dark:divide-gray-700 dark:border-gray-700" role="list">
+            {favoritesEta.map(({ favorite: f, eta }) => (
+              <li
+                key={`${f.routeId}:${f.direction}:${f.stopId}`}
+                className="flex items-center gap-3 px-4 py-3"
+              >
+                <Link
+                  to={`/route/${f.routeId}?name=${encodeURIComponent(f.routeName)}`}
+                  className="flex flex-1 items-center gap-2"
+                >
+                  <span className="rounded bg-blue-100 px-2 py-0.5 text-sm font-semibold text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                    {f.routeName}
+                  </span>
+                  <span className="text-sm text-gray-500">
+                    {f.direction === 0 ? "去" : "回"}
+                  </span>
+                  <span>{f.stopName}</span>
+                </Link>
+                <span
+                  className={`text-sm ${statusColor(eta?.eta ?? -999)}`}
+                >
+                  {eta?.status ?? "—"}
+                </span>
+                {eta?.buses && eta.buses.length > 0 && (
+                  <span className="text-xs text-gray-400">
+                    {eta.buses.map((b) => b.plateNumb).join(", ")}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  aria-label="移除收藏"
+                  className="text-gray-400 hover:text-red-500"
+                  onClick={() =>
+                    removeFavorite(f.routeId, f.direction, f.stopId)
+                  }
+                >
+                  &#10005;
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   );
 }
