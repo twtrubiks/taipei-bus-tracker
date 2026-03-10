@@ -48,19 +48,18 @@ func convertRoutes(tdxRoutes []TDXRoute) []model.Route {
 }
 
 func convertStops(stopOfRoutes []TDXStopOfRoute) []model.Stop {
-	total := 0
-	for _, sor := range stopOfRoutes {
-		total += len(sor.Stops)
+	// Use only the first StopOfRoute record to avoid duplicates from multiple sub-routes
+	if len(stopOfRoutes) == 0 {
+		return nil
 	}
-	stops := make([]model.Stop, 0, total)
-	for _, sor := range stopOfRoutes {
-		for _, s := range sor.Stops {
-			stops = append(stops, model.Stop{
-				StopID:   s.StopUID,
-				Name:     s.StopName.ZhTw,
-				Sequence: s.StopSequence,
-			})
-		}
+	first := stopOfRoutes[0]
+	stops := make([]model.Stop, 0, len(first.Stops))
+	for _, s := range first.Stops {
+		stops = append(stops, model.Stop{
+			StopID:   s.StopUID,
+			Name:     s.StopName.ZhTw,
+			Sequence: s.StopSequence,
+		})
 	}
 	return stops
 }

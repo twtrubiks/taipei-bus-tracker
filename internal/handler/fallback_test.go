@@ -112,3 +112,65 @@ func TestFallback_PrimaryFails_NoFallback_NoCacheHit(t *testing.T) {
 		t.Error("expected error, got nil")
 	}
 }
+
+func TestFallbackSearchRoutes_PrimaryFails_FallbackSuccess(t *testing.T) {
+	primary := &mockProvider{err: fmt.Errorf("rate limit")}
+	fallback := &mockProvider{routes: []model.Route{{RouteID: "R1", Name: "299"}}}
+	c := cache.New(10 * time.Second)
+
+	svc := NewFallbackService(primary, fallback, c)
+	routes, err := svc.SearchRoutes(context.Background(), "Taipei", "299")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(routes) != 1 || routes[0].Name != "299" {
+		t.Errorf("expected route 299, got %v", routes)
+	}
+}
+
+func TestFallbackSearchRoutes_BothFail_CacheHit(t *testing.T) {
+	primary := &mockProvider{err: fmt.Errorf("timeout")}
+	fallback := &mockProvider{err: fmt.Errorf("error")}
+	c := cache.New(10 * time.Second)
+	c.Set("routes:Taipei:299", []model.Route{{RouteID: "R1", Name: "299"}})
+
+	svc := NewFallbackService(primary, fallback, c)
+	routes, err := svc.SearchRoutes(context.Background(), "Taipei", "299")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(routes) != 1 {
+		t.Errorf("expected 1 cached route, got %d", len(routes))
+	}
+}
+
+func TestFallbackGetStops_PrimaryFails_FallbackSuccess(t *testing.T) {
+	primary := &mockProvider{err: fmt.Errorf("rate limit")}
+	fallback := &mockProvider{stops: []model.Stop{{StopID: "S1", Name: "台北車站", Sequence: 1}}}
+	c := cache.New(10 * time.Second)
+
+	svc := NewFallbackService(primary, fallback, c)
+	stops, err := svc.GetStops(context.Background(), "Taipei", "R1", 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(stops) != 1 || stops[0].Name != "台北車站" {
+		t.Errorf("expected 台北車站, got %v", stops)
+	}
+}
+
+func TestFallbackGetStops_BothFail_CacheHit(t *testing.T) {
+	primary := &mockProvider{err: fmt.Errorf("timeout")}
+	fallback := &mockProvider{err: fmt.Errorf("error")}
+	c := cache.New(10 * time.Second)
+	c.Set("stops:Taipei:R1:0", []model.Stop{{StopID: "S1", Name: "台北車站", Sequence: 1}})
+
+	svc := NewFallbackService(primary, fallback, c)
+	stops, err := svc.GetStops(context.Background(), "Taipei", "R1", 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(stops) != 1 {
+		t.Errorf("expected 1 cached stop, got %d", len(stops))
+	}
+}

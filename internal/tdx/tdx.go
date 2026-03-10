@@ -125,7 +125,8 @@ func (p *Provider) doGet(ctx context.Context, url string) ([]byte, error) {
 }
 
 func (p *Provider) SearchRoutes(ctx context.Context, city, keyword string) ([]model.Route, error) {
-	u := fmt.Sprintf("%s/Route/City/%s?$filter=contains(RouteName/Zh_tw,'%s')&$format=JSON", baseURL, city, url.QueryEscape(keyword))
+	filter := fmt.Sprintf("contains(RouteName/Zh_tw,'%s')", keyword)
+	u := buildURL(baseURL+"/Route/City/"+city, filter)
 	body, err := p.doGet(ctx, u)
 	if err != nil {
 		return nil, err
@@ -139,7 +140,8 @@ func (p *Provider) SearchRoutes(ctx context.Context, city, keyword string) ([]mo
 }
 
 func (p *Provider) GetStops(ctx context.Context, city, routeID string, direction int) ([]model.Stop, error) {
-	u := fmt.Sprintf("%s/StopOfRoute/City/%s?$filter=RouteUID eq '%s' and Direction eq %d&$format=JSON", baseURL, city, routeID, direction)
+	filter := fmt.Sprintf("RouteUID eq '%s' and Direction eq %d", routeID, direction)
+	u := buildURL(baseURL+"/StopOfRoute/City/"+city, filter)
 	body, err := p.doGet(ctx, u)
 	if err != nil {
 		return nil, err
@@ -153,7 +155,8 @@ func (p *Provider) GetStops(ctx context.Context, city, routeID string, direction
 }
 
 func (p *Provider) GetETA(ctx context.Context, city, routeID string, direction int) ([]model.StopETA, error) {
-	u := fmt.Sprintf("%s/EstimatedTimeOfArrival/City/%s?$filter=RouteUID eq '%s' and Direction eq %d&$format=JSON", baseURL, city, routeID, direction)
+	filter := fmt.Sprintf("RouteUID eq '%s' and Direction eq %d", routeID, direction)
+	u := buildURL(baseURL+"/EstimatedTimeOfArrival/City/"+city, filter)
 	body, err := p.doGet(ctx, u)
 	if err != nil {
 		return nil, err
@@ -164,4 +167,12 @@ func (p *Provider) GetETA(ctx context.Context, city, routeID string, direction i
 		return nil, err
 	}
 	return convertETAs(tdxETAs), nil
+}
+
+// buildURL constructs a TDX API URL with properly encoded query parameters.
+func buildURL(base, filter string) string {
+	params := url.Values{}
+	params.Set("$filter", filter)
+	params.Set("$format", "JSON")
+	return base + "?" + params.Encode()
 }

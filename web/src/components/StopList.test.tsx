@@ -73,4 +73,19 @@ describe("StopList ETA status rendering", () => {
     const dashes = screen.getAllByText("—");
     expect(dashes).toHaveLength(2);
   });
+
+  it("matches ETA by stopId when sequence is 0 (TDX mode)", () => {
+    const etas: StopETA[] = [
+      { stopId: "s2", stopName: "中山站", sequence: 0, eta: 120, status: "進站中", buses: [], source: "tdx" },
+    ];
+    render(<StopList stops={stops} etas={etas} />);
+    // s2 = 中山站 should show 進站中, 台北車站 should show —
+    expect(screen.getByText("進站中")).toBeInTheDocument();
+    expect(screen.getAllByText("—")).toHaveLength(1);
+  });
+
+  it("renders empty state when stops is null", () => {
+    render(<StopList stops={null as unknown as Stop[]} etas={[]} />);
+    expect(screen.getByText("無站點資料")).toBeInTheDocument();
+  });
 });

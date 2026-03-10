@@ -7,7 +7,6 @@ interface Props {
   stops: Stop[];
   etas: StopETA[];
   routeId?: string;
-  routeName?: string;
   direction?: number;
   isFavorite?: (routeId: string, direction: number, stopId: string) => boolean;
   onToggleFavorite?: (stop: Stop) => void;
@@ -29,20 +28,25 @@ export default function StopList({
   onSetAlert,
   onRemoveAlert,
 }: Props) {
-  const etaMap = useMemo(
-    () => new Map(etas.map((e) => [e.sequence, e])),
+  // Match ETA to stops: prefer stopId (TDX), fall back to sequence (eBus)
+  const etaByStopId = useMemo(
+    () => new Map((etas ?? []).filter((e) => e.stopId).map((e) => [e.stopId, e])),
+    [etas],
+  );
+  const etaBySeq = useMemo(
+    () => new Map((etas ?? []).filter((e) => e.sequence > 0).map((e) => [e.sequence, e])),
     [etas],
   );
   const [alertMenuStop, setAlertMenuStop] = useState<string | null>(null);
 
-  if (stops.length === 0) {
+  if (!stops || stops.length === 0) {
     return <p className="mt-4 text-gray-500">無站點資料</p>;
   }
 
   return (
     <ul className="mt-4 divide-y" role="list">
       {stops.map((stop) => {
-        const eta = etaMap.get(stop.sequence);
+        const eta = etaByStopId.get(stop.stopId) ?? etaBySeq.get(stop.sequence);
         const fav =
           routeId !== undefined &&
           direction !== undefined &&

@@ -74,6 +74,37 @@ func TestConvertStops(t *testing.T) {
 	}
 }
 
+func TestConvertStops_MultipleSubRoutes(t *testing.T) {
+	// TDX returns multiple StopOfRoute records for sub-routes (e.g. 299三重, 299大都會).
+	// convertStops should only use the first one to avoid duplicates.
+	raw := `[{
+		"Stops": [{"StopUID": "S1", "StopName": {"Zh_tw": "站A"}, "StopSequence": 1}]
+	}, {
+		"Stops": [{"StopUID": "S1", "StopName": {"Zh_tw": "站A"}, "StopSequence": 1},
+		          {"StopUID": "S2", "StopName": {"Zh_tw": "站B"}, "StopSequence": 2}]
+	}]`
+
+	var stopOfRoutes []TDXStopOfRoute
+	if err := json.Unmarshal([]byte(raw), &stopOfRoutes); err != nil {
+		t.Fatal(err)
+	}
+
+	stops := convertStops(stopOfRoutes)
+	if len(stops) != 1 {
+		t.Errorf("expected 1 stop (first sub-route only), got %d", len(stops))
+	}
+	if stops[0].StopID != "S1" {
+		t.Errorf("expected S1, got %s", stops[0].StopID)
+	}
+}
+
+func TestConvertStops_Empty(t *testing.T) {
+	stops := convertStops(nil)
+	if stops != nil {
+		t.Errorf("expected nil, got %v", stops)
+	}
+}
+
 func TestConvertETAs(t *testing.T) {
 	raw := `[{
 		"StopUID": "TPE10001001",

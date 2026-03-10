@@ -17,3 +17,4 @@ config.yaml
 
 # Logs
 *.log
+/test-tdx

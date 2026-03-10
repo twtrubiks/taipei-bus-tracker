@@ -13,15 +13,11 @@ const defaultCity = "Taipei"
 // Handlers holds dependencies for HTTP handlers.
 type Handlers struct {
 	Fallback *FallbackService
-	Primary  model.BusDataSource
-	Cache    *cache.Cache
 }
 
 func NewHandlers(primary model.BusDataSource, fallback model.BusDataSource, c *cache.Cache) *Handlers {
 	return &Handlers{
 		Fallback: NewFallbackService(primary, fallback, c),
-		Primary:  primary,
-		Cache:    c,
 	}
 }
 
@@ -38,22 +34,13 @@ func (h *Handlers) SearchRoutes(w http.ResponseWriter, r *http.Request) {
 		city = defaultCity
 	}
 
-	cacheKey := "routes:" + city + ":" + q
-	if cached, ok := h.Cache.Get(cacheKey); ok {
-		if routes, ok := cached.([]model.Route); ok {
-			writeJSON(w, http.StatusOK, routes)
-			return
-		}
-	}
-
 	ctx := r.Context()
-	routes, err := h.Primary.SearchRoutes(ctx, city, q)
+	routes, err := h.Fallback.SearchRoutes(ctx, city, q)
 	if err != nil {
 		writeError(w, http.StatusBadGateway, "upstream unavailable")
 		return
 	}
 
-	h.Cache.Set(cacheKey, routes)
 	writeJSON(w, http.StatusOK, routes)
 }
 
@@ -71,22 +58,13 @@ func (h *Handlers) GetStops(w http.ResponseWriter, r *http.Request) {
 		city = defaultCity
 	}
 
-	cacheKey := "stops:" + city + ":" + routeID + ":" + r.URL.Query().Get("gb")
-	if cached, ok := h.Cache.Get(cacheKey); ok {
-		if stops, ok := cached.([]model.Stop); ok {
-			writeJSON(w, http.StatusOK, stops)
-			return
-		}
-	}
-
 	ctx := r.Context()
-	stops, err := h.Primary.GetStops(ctx, city, routeID, direction)
+	stops, err := h.Fallback.GetStops(ctx, city, routeID, direction)
 	if err != nil {
 		writeError(w, http.StatusBadGateway, "upstream unavailable")
 		return
 	}
 
-	h.Cache.Set(cacheKey, stops)
 	writeJSON(w, http.StatusOK, stops)
 }
 

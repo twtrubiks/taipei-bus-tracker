@@ -93,6 +93,12 @@ export default function RoutePage() {
         </p>
       )}
 
+      {etaData?.source && (
+        <p className="mt-2 text-xs text-gray-400">
+          資料來源：{etaData.source === "tdx" ? "TDX" : "eBus"}
+        </p>
+      )}
+
       {etaError && (
         <p className="mt-2 text-sm text-red-500">載入失敗，稍後重試</p>
       )}
@@ -104,7 +110,6 @@ export default function RoutePage() {
           stops={stops}
           etas={etaData?.stops ?? []}
           routeId={routeId}
-          routeName={routeName}
           direction={direction}
           isFavorite={isFavorite}
           onToggleFavorite={handleToggleFavorite}
