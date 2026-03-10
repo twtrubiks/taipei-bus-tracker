@@ -54,11 +54,14 @@
 
 避免 TDX rate limit（20 次/分鐘），最快也只有 15 秒一次。
 
-### 5. 通知方式：`exec.Command("notify-send", ...)`
+### 5. 通知方式：notify-send → kdialog fallback
 
-直接 shell out 到 `notify-send`，最簡單可靠。KDE Plasma 內建通知 daemon，freedesktop 標準。
+啟動時依序偵測可用的通知工具：
+1. `notify-send`（libnotify，freedesktop 標準）
+2. `kdialog --passivepopup`（KDE 原生，不需額外安裝）
+3. 都沒有 → 僅 terminal 顯示模式
 
-**替代方案**：Go D-Bus library 直接呼叫 → 增加依賴，`notify-send` 已經夠好。
+**替代方案**：Go D-Bus library 直接呼叫 → 增加依賴，shell out 已經夠好。
 
 ### 6. 優雅停止：signal handling
 
@@ -68,5 +71,5 @@
 
 - **[TDX rate limit]** → 動態間隔最快 15 秒，不會超過 4 次/分鐘
 - **[eBus 無車牌]** → 用跳變去重而非車牌，極端情況下兩班車 ETA 都 < threshold 可能少通知一次，可接受
-- **[notify-send 不存在]** → 啟動時檢查 `which notify-send`，不存在則提示安裝
+- **[通知工具不存在]** → 啟動時偵測 notify-send → kdialog fallback，都沒有則僅 terminal 模式
 - **[API 全部失敗]** → log 錯誤繼續 polling，不中斷監控
