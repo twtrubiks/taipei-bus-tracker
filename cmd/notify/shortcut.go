@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"os"
@@ -115,6 +116,56 @@ func deleteShortcut(name string) {
 		log.Fatalf("儲存失敗: %v", err)
 	}
 	fmt.Printf("✓ 已刪除快捷「%s」\n", name)
+}
+
+// promptSaveShortcut asks the user for a shortcut name and saves it.
+// If the name already exists, it shows the existing config and asks for overwrite confirmation.
+func promptSaveShortcut(scanner *bufio.Scanner, s Shortcut) {
+	fmt.Print("\n儲存為快捷？輸入名稱（Enter 跳過）: ")
+	if !scanner.Scan() {
+		return
+	}
+	name := strings.TrimSpace(scanner.Text())
+	if name == "" {
+		return
+	}
+
+	cfg, err := loadNotifyConfig()
+	if err != nil {
+		log.Printf("載入設定失敗: %v", err)
+		return
+	}
+
+	existing := findShortcut(cfg, name)
+	if existing != nil {
+		fmt.Printf("快捷「%s」已存在: %s %s（%s），%d 分鐘\n",
+			existing.Name, existing.RouteName, existing.StopName,
+			formatDirection(existing.Direction), existing.Threshold)
+		fmt.Print("是否覆蓋？(y/N): ")
+		if !scanner.Scan() {
+			return
+		}
+		answer := strings.TrimSpace(strings.ToLower(scanner.Text()))
+		if answer != "y" && answer != "yes" {
+			fmt.Println("已取消儲存")
+			return
+		}
+		for i := range cfg.Shortcuts {
+			if cfg.Shortcuts[i].Name == name {
+				cfg.Shortcuts = append(cfg.Shortcuts[:i], cfg.Shortcuts[i+1:]...)
+				break
+			}
+		}
+	}
+
+	s.Name = name
+	cfg.Shortcuts = append(cfg.Shortcuts, s)
+
+	if err := saveNotifyConfig(cfg); err != nil {
+		log.Printf("儲存失敗: %v", err)
+		return
+	}
+	fmt.Printf("✓ 已儲存快捷「%s」\n", name)
 }
 
 // loadShortcut loads a shortcut by name. Exits on error.

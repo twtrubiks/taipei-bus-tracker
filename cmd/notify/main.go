@@ -106,6 +106,18 @@ func main() {
 		routeName = route.Name
 		startStop = route.StartStop
 		endStop = route.EndStop
+
+		promptSaveShortcut(scanner, Shortcut{
+			RouteID:      routeID,
+			RouteName:    routeName,
+			StartStop:    startStop,
+			EndStop:      endStop,
+			Direction:    direction,
+			StopID:       stop.StopID,
+			StopName:     stop.Name,
+			StopSequence: stop.Sequence,
+			Threshold:    threshold,
+		})
 	}
 
 	notifyCmd := detectNotifyTool()
