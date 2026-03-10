@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -78,21 +79,41 @@ func formatDirection(direction int) string {
 	return "去程"
 }
 
-// listShortcuts prints all saved shortcuts.
-func listShortcuts() {
+// listShortcuts prints all saved shortcuts with numbered selection.
+// Returns the selected shortcut, or nil if cancelled or no shortcuts exist.
+func listShortcuts() *Shortcut {
 	cfg, err := loadNotifyConfig()
 	if err != nil {
 		log.Fatalf("載入設定失敗: %v", err)
 	}
 	if len(cfg.Shortcuts) == 0 {
 		fmt.Println("尚無快捷設定")
-		return
+		return nil
 	}
 	fmt.Println("快捷列表：")
-	for _, s := range cfg.Shortcuts {
-		fmt.Printf("  %-8s %s %s（%s）%d 分鐘\n",
-			s.Name, s.RouteName, s.StopName, formatDirection(s.Direction), s.Threshold)
+	for i, s := range cfg.Shortcuts {
+		fmt.Printf("  [%d] %-8s %s %s（%s）%d 分鐘\n",
+			i+1, s.Name, s.RouteName, s.StopName, formatDirection(s.Direction), s.Threshold)
 	}
+
+	scanner := bufio.NewScanner(os.Stdin)
+	fmt.Print("\n選擇（Enter 取消）: ")
+	if !scanner.Scan() {
+		return nil
+	}
+	text := strings.TrimSpace(scanner.Text())
+	if text == "" {
+		return nil
+	}
+	choice, err := strconv.Atoi(text)
+	if err != nil || choice < 1 || choice > len(cfg.Shortcuts) {
+		fmt.Println("無效選擇")
+		return nil
+	}
+	s := cfg.Shortcuts[choice-1]
+	fmt.Printf("載入快捷「%s」: %s %s（%s），%d 分鐘前通知\n",
+		s.Name, s.RouteName, s.StopName, formatDirection(s.Direction), s.Threshold)
+	return &s
 }
 
 // deleteShortcut removes a shortcut by name.

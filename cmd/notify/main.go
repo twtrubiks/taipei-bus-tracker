@@ -29,16 +29,19 @@ func main() {
 	deleteFlag := flag.String("delete", "", "刪除指定快捷")
 	flag.Parse()
 
-	// Handle --list
-	if *listFlag {
-		listShortcuts()
-		return
-	}
-
 	// Handle --delete
 	if *deleteFlag != "" {
 		deleteShortcut(*deleteFlag)
 		return
+	}
+
+	// Handle --list (interactive: select a shortcut or cancel)
+	var listSelected *Shortcut
+	if *listFlag {
+		listSelected = listShortcuts()
+		if listSelected == nil {
+			return
+		}
 	}
 
 	cfg, err := config.Load("config.yaml")
@@ -73,16 +76,22 @@ func main() {
 	var direction, threshold int
 	var stop model.Stop
 
-	// Check for positional arg (shortcut name)
-	if shortcutName := flag.Arg(0); shortcutName != "" {
-		s := loadShortcut(shortcutName)
-		routeID = s.RouteID
-		routeName = s.RouteName
-		startStop = s.StartStop
-		endStop = s.EndStop
-		direction = s.Direction
-		stop = model.Stop{StopID: s.StopID, Name: s.StopName, Sequence: s.StopSequence}
-		threshold = s.Threshold
+	// Load from --list selection or positional arg (shortcut name)
+	var shortcut *Shortcut
+	if listSelected != nil {
+		shortcut = listSelected
+	} else if shortcutName := flag.Arg(0); shortcutName != "" {
+		shortcut = loadShortcut(shortcutName)
+	}
+
+	if shortcut != nil {
+		routeID = shortcut.RouteID
+		routeName = shortcut.RouteName
+		startStop = shortcut.StartStop
+		endStop = shortcut.EndStop
+		direction = shortcut.Direction
+		stop = model.Stop{StopID: shortcut.StopID, Name: shortcut.StopName, Sequence: shortcut.StopSequence}
+		threshold = shortcut.Threshold
 	} else {
 		scanner := bufio.NewScanner(os.Stdin)
 
