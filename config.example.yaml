@@ -1,0 +1,8 @@
+# Server settings
+port: 8080
+static_path: ./static
+
+# TDX API credentials (or use env: TDX_CLIENT_ID, TDX_CLIENT_SECRET)
+tdx:
+  client_id: ""
+  client_secret: ""

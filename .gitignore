@@ -1,0 +1,18 @@
+# Go
+taipei-bus
+*.exe
+
+# Node / React
+node_modules/
+dist/
+.vite/
+
+# Config & secrets
+config.yaml
+.env
+
+# OS
+.DS_Store
+
+# Logs
+*.log

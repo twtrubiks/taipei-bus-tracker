@@ -1,0 +1,7 @@
+#!/bin/sh
+echo "Running lint checks..."
+make lint
+if [ $? -ne 0 ]; then
+    echo "Lint failed. Commit aborted."
+    exit 1
+fi
