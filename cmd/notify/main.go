@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/twtrubiks/taipei-bus-tracker/internal/cache"
@@ -48,7 +49,7 @@ func main() {
 
 	svc := handler.NewFallbackService(primary, fallbackSrc, c)
 
-	ctx, cancelSignal := signal.NotifyContext(context.Background(), os.Interrupt)
+	ctx, cancelSignal := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancelSignal()
 
 	scanner := bufio.NewScanner(os.Stdin)

@@ -26,5 +26,5 @@
 
 ## 5. 生命週期管理
 
-- [ ] 5.1 實作 signal handling：監聽 SIGINT/SIGTERM，觸發 context cancel
-- [ ] 5.2 優雅停止時輸出摘要：總監控時間、通知次數
+- [x] 5.1 實作 signal handling：監聽 SIGINT/SIGTERM，觸發 context cancel
+- [x] 5.2 優雅停止時輸出摘要：總監控時間、通知次數
