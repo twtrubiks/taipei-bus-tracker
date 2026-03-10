@@ -66,6 +66,22 @@ BusDataSource interface
 
 **理由**: 一個 binary、一個 port、沒有 CORS 問題。前端 build 產物直接放在 Go binary 旁邊的 `static/` 目錄。
 
+### 8. eBus HTML Scraping：補齊 SearchRoutes 與 GetStops
+
+**選擇**: 透過 scraping ebus.gov.taipei 的 HTML 頁面，為 eBus provider 補上 SearchRoutes 和 GetStops。
+
+**端點**:
+- `POST /Query/QBusRoute`：搜尋路線，傳入 `QueryModel.QueryString`，回傳 HTML 列表
+- `GET /Route/StopsOfRoute?routeId=xxx`：取得路線站序頁面，去程在 `#GoDirectionRoute`、回程在 `#BackDirectionRoute`
+
+**解析方式**: 正則表達式解析 HTML（不引入 HTML parser 依賴）
+
+**CSRF token**: 從 `/Query/BusRoute` 頁面取得，與現有 GetETA 的 token 共用同一管理機制
+
+**理由**: TDX 憑證未核發前，eBus 是唯一資料源。原本 eBus provider 只有 GetETA，缺少 SearchRoutes 和 GetStops 導致前端無法使用。透過 scraping 補齊三個方法，讓 eBus 可以獨立運作。
+
+**風險**: HTML 結構變動會導致解析失敗，但 eBus 本身就是非正式 API，此風險已在預期內。
+
 ### 7. 設定檔：YAML 或環境變數
 
 **選擇**: 支援環境變數 + YAML config file，環境變數優先。

@@ -16,8 +16,10 @@ import (
 )
 
 const (
-	pageURL     = "https://ebus.gov.taipei"
-	stopDynsURL = "https://ebus.gov.taipei/EBus/GetStopDyns"
+	pageURL      = "https://ebus.gov.taipei"
+	stopDynsURL  = "https://ebus.gov.taipei/EBus/GetStopDyns"
+	searchURL    = "https://ebus.gov.taipei/Query/QBusRoute"
+	stopsPageURL = "https://ebus.gov.taipei/Route/StopsOfRoute"
 )
 
 var csrfTokenRe = regexp.MustCompile(`name="__RequestVerificationToken".*?value="([^"]+)"`)
@@ -85,39 +87,90 @@ func (p *Provider) getCSRFToken(ctx context.Context) (string, []*http.Cookie, er
 	return p.csrfToken, p.cookies, nil
 }
 
-func (p *Provider) getStopDyns(ctx context.Context, routeID string, direction int) ([]EBusStopDynRaw, error) {
+// doPostWithCSRF performs a POST request with CSRF token and cookies.
+// On non-200 status, it clears the cached token for retry on next call.
+func (p *Provider) doPostWithCSRF(ctx context.Context, targetURL string, extra url.Values, headers map[string]string) ([]byte, error) {
 	token, cookies, err := p.getCSRFToken(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	data := url.Values{
-		"__RequestVerificationToken": {token},
-		"routeId": {routeID},
-		"gb":      {fmt.Sprintf("%d", direction)},
+	data := url.Values{"__RequestVerificationToken": {token}}
+	for k, vs := range extra {
+		data[k] = vs
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, stopDynsURL, strings.NewReader(data.Encode()))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, targetURL, strings.NewReader(data.Encode()))
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
 	for _, c := range cookies {
 		req.AddCookie(c)
 	}
 
 	resp, err := p.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("ebus GetStopDyns failed: %w", err)
+		return nil, err
 	}
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
-		// Token might be expired, clear and retry once
 		p.mu.Lock()
 		p.csrfToken = ""
 		p.mu.Unlock()
-		return nil, fmt.Errorf("ebus returned status %d", resp.StatusCode)
+		return nil, fmt.Errorf("ebus %s returned status %d", targetURL, resp.StatusCode)
+	}
+
+	return io.ReadAll(resp.Body)
+}
+
+func (p *Provider) getStopDyns(ctx context.Context, routeID string, direction int) ([]EBusStopDynRaw, error) {
+	body, err := p.doPostWithCSRF(ctx, stopDynsURL, url.Values{
+		"routeId": {routeID},
+		"gb":      {fmt.Sprintf("%d", direction)},
+	}, nil)
+	if err != nil {
+		return nil, fmt.Errorf("ebus GetStopDyns: %w", err)
+	}
+
+	var stops []EBusStopDynRaw
+	if err := json.Unmarshal(body, &stops); err != nil {
+		return nil, fmt.Errorf("failed to parse ebus response: %w", err)
+	}
+	return stops, nil
+}
+
+// SearchRoutes searches routes by keyword via eBus HTML scraping.
+func (p *Provider) SearchRoutes(ctx context.Context, _ string, keyword string) ([]model.Route, error) {
+	body, err := p.doPostWithCSRF(ctx, searchURL, url.Values{
+		"QueryModel.QueryString": {keyword},
+	}, map[string]string{"X-Requested-With": "XMLHttpRequest"})
+	if err != nil {
+		return nil, fmt.Errorf("ebus SearchRoutes: %w", err)
+	}
+	return parseSearchRoutes(string(body)), nil
+}
+
+// GetStops returns stops for a route by scraping the eBus route page.
+func (p *Provider) GetStops(ctx context.Context, _ string, routeID string, direction int) ([]model.Stop, error) {
+	reqURL := fmt.Sprintf("%s?routeId=%s", stopsPageURL, routeID)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := p.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("ebus GetStops failed: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("ebus stops page returned status %d", resp.StatusCode)
 	}
 
 	body, err := io.ReadAll(resp.Body)
@@ -125,22 +178,7 @@ func (p *Provider) getStopDyns(ctx context.Context, routeID string, direction in
 		return nil, err
 	}
 
-	var stops []EBusStopDynRaw
-	if err := json.Unmarshal(body, &stops); err != nil {
-		return nil, fmt.Errorf("failed to parse ebus response: %w", err)
-	}
-
-	return stops, nil
-}
-
-// SearchRoutes is not supported by eBus provider.
-func (p *Provider) SearchRoutes(_ context.Context, _, _ string) ([]model.Route, error) {
-	return nil, fmt.Errorf("eBus provider does not support SearchRoutes")
-}
-
-// GetStops is not supported by eBus provider.
-func (p *Provider) GetStops(_ context.Context, _, _ string, _ int) ([]model.Stop, error) {
-	return nil, fmt.Errorf("eBus provider does not support GetStops")
+	return parseStopsHTML(string(body), direction), nil
 }
 
 // GetETA returns estimated arrival times from eBus.

@@ -22,6 +22,14 @@
 - [x] 2.8 [TDD] 先寫 Fallback 測試：TDX 成功/失敗 × eBus 成功/失敗 × 有無快取，共 6 種情境
 - [x] 2.9 實作 Fallback 機制：TDX 失敗（逾時 5 秒 / 5xx / 額度用盡）自動切換 eBus
 
+## 2.5. eBus 補齊 SearchRoutes 與 GetStops（HTML Scraping）
+
+- [x] 2.10 [TDD] 先寫 eBus SearchRoutes HTML 解析測試：解析搜尋結果 HTML → []Route（routeId、routeName、startStop、endStop）
+- [x] 2.11 實作 eBus SearchRoutes：POST /Query/QBusRoute + HTML 解析，CSRF token 共用現有機制
+- [x] 2.12 [TDD] 先寫 eBus GetStops HTML 解析測試：解析站序頁面 HTML → []Stop（stopId、stopName、sequence），含去程/回程區分
+- [x] 2.13 實作 eBus GetStops：GET /Route/StopsOfRoute + HTML 解析
+- [x] 2.14 整合測試：用 spike 驗證 SearchRoutes → GetStops → GetETA 完整流程
+
 ## 3. Go 後端 - API 與快取
 
 - [x] 3.1 [TDD] 先寫 cache 測試：Set/Get、TTL 過期、並發安全
