@@ -32,12 +32,14 @@ export function useFavoritesEta(favorites: Favorite[]): FavoriteETA[] {
 
   useEffect(() => {
     if (routeKeys.length === 0) return;
+    let cancelled = false;
 
     const doFetch = async () => {
       const newMap = new Map<string, StopETA>();
       const results = await Promise.allSettled(
         routeKeys.map((rk) => getETA(rk.routeId, rk.direction)),
       );
+      if (cancelled) return;
       results.forEach((result, i) => {
         if (result.status === "fulfilled") {
           const rk = routeKeys[i];
@@ -72,6 +74,7 @@ export function useFavoritesEta(favorites: Favorite[]): FavoriteETA[] {
     document.addEventListener("visibilitychange", handleVisibility);
 
     return () => {
+      cancelled = true;
       clearInterval(timerRef.current);
       document.removeEventListener("visibilitychange", handleVisibility);
     };

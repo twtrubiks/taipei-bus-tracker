@@ -11,15 +11,20 @@ export function useEta(routeId: string, direction: number) {
 
   useEffect(() => {
     if (!routeId) return;
+    let cancelled = false;
 
     const doFetch = () =>
       getETA(routeId, direction)
         .then((res) => {
-          setData(res);
-          setError(null);
+          if (!cancelled) {
+            setData(res);
+            setError(null);
+          }
         })
         .catch((err) => {
-          setError(err instanceof Error ? err : new Error(String(err)));
+          if (!cancelled) {
+            setError(err instanceof Error ? err : new Error(String(err)));
+          }
         });
 
     doFetch();
@@ -38,6 +43,7 @@ export function useEta(routeId: string, direction: number) {
     document.addEventListener("visibilitychange", handleVisibility);
 
     return () => {
+      cancelled = true;
       clearInterval(timerRef.current);
       document.removeEventListener("visibilitychange", handleVisibility);
     };

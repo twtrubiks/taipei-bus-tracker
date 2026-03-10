@@ -33,15 +33,20 @@ export default function RoutePage() {
 
   useEffect(() => {
     if (!routeId) return;
+    let cancelled = false;
     getStops(routeId, direction)
       .then((data) => {
-        setStops(data);
-        setLoadedKey(`${routeId}-${direction}`);
+        if (!cancelled) setStops(data);
       })
       .catch(() => {
-        setStops([]);
-        setLoadedKey(`${routeId}-${direction}`);
+        if (!cancelled) setStops([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadedKey(`${routeId}-${direction}`);
       });
+    return () => {
+      cancelled = true;
+    };
   }, [routeId, direction]);
 
   if (!routeId) return null;
