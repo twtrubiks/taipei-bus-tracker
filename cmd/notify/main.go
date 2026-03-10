@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -24,6 +25,22 @@ import (
 const defaultCity = "Taipei"
 
 func main() {
+	listFlag := flag.Bool("list", false, "列出所有快捷")
+	deleteFlag := flag.String("delete", "", "刪除指定快捷")
+	flag.Parse()
+
+	// Handle --list
+	if *listFlag {
+		listShortcuts()
+		return
+	}
+
+	// Handle --delete
+	if *deleteFlag != "" {
+		deleteShortcut(*deleteFlag)
+		return
+	}
+
 	cfg, err := config.Load("config.yaml")
 	if err != nil {
 		log.Fatalf("設定載入失敗: %v", err)
@@ -52,41 +69,61 @@ func main() {
 	ctx, cancelSignal := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancelSignal()
 
-	scanner := bufio.NewScanner(os.Stdin)
+	var routeID, routeName, startStop, endStop string
+	var direction, threshold int
+	var stop model.Stop
 
-	route, err := selectRoute(ctx, svc, scanner)
-	if err != nil {
-		log.Fatalf("路線選擇失敗: %v", err)
-	}
+	// Check for positional arg (shortcut name)
+	if shortcutName := flag.Arg(0); shortcutName != "" {
+		s := loadShortcut(shortcutName)
+		routeID = s.RouteID
+		routeName = s.RouteName
+		startStop = s.StartStop
+		endStop = s.EndStop
+		direction = s.Direction
+		stop = model.Stop{StopID: s.StopID, Name: s.StopName, Sequence: s.StopSequence}
+		threshold = s.Threshold
+	} else {
+		scanner := bufio.NewScanner(os.Stdin)
 
-	direction, err := selectDirection(route, scanner)
-	if err != nil {
-		log.Fatalf("方向選擇失敗: %v", err)
-	}
+		route, err := selectRoute(ctx, svc, scanner)
+		if err != nil {
+			log.Fatalf("路線選擇失敗: %v", err)
+		}
 
-	stop, err := selectStop(ctx, svc, scanner, route.RouteID, direction)
-	if err != nil {
-		log.Fatalf("站點選擇失敗: %v", err)
-	}
+		direction, err = selectDirection(route, scanner)
+		if err != nil {
+			log.Fatalf("方向選擇失敗: %v", err)
+		}
 
-	threshold := selectThreshold(scanner)
+		stop, err = selectStop(ctx, svc, scanner, route.RouteID, direction)
+		if err != nil {
+			log.Fatalf("站點選擇失敗: %v", err)
+		}
 
-	dirLabel := fmt.Sprintf("去程：%s→%s", route.StartStop, route.EndStop)
-	if direction == 1 {
-		dirLabel = fmt.Sprintf("回程：%s→%s", route.EndStop, route.StartStop)
+		threshold = selectThreshold(scanner)
+		routeID = route.RouteID
+		routeName = route.Name
+		startStop = route.StartStop
+		endStop = route.EndStop
 	}
 
 	notifyCmd := detectNotifyTool()
 	detectSoundTool()
 
+	dirLabel := fmt.Sprintf("%s：%s→%s", formatDirection(direction), startStop, endStop)
+	if direction == 1 {
+		dirLabel = fmt.Sprintf("%s：%s→%s", formatDirection(direction), endStop, startStop)
+	}
+
 	fmt.Printf("\n✓ 監控中 %s %s（%s），%d 分鐘前通知  Ctrl+C 停止\n",
-		route.Name, stop.Name, dirLabel, threshold)
+		routeName, stop.Name, dirLabel, threshold)
 	if notifyCmd == "" {
 		fmt.Println("⚠ 未偵測到通知工具，僅 terminal 顯示模式")
 	}
 	fmt.Println("─────────────────────────────────────────────")
 
-	runMonitor(ctx, svc, route.RouteID, direction, stop, route.Name, threshold, notifyCmd)
+	runMonitor(ctx, svc, routeID, direction, stop, routeName, threshold, notifyCmd)
 }
 
 // detectNotifyTool returns the notification command to use:

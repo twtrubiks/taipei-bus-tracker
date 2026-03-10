@@ -1,13 +1,13 @@
 ## 1. 設定檔基礎
 
-- [ ] 1.1 定義 `Shortcut` struct 和 `NotifyConfig` struct（含 YAML tag），新增 `notify.yaml` 的讀寫函式（loadNotifyConfig / saveNotifyConfig）
-- [ ] 1.2 將 `notify.yaml` 加入 `.gitignore`
+- [x] 1.1 定義 `Shortcut` struct 和 `NotifyConfig` struct（含 YAML tag），新增 `notify.yaml` 的讀寫函式（loadNotifyConfig / saveNotifyConfig）
+- [x] 1.2 將 `notify.yaml` 加入 `.gitignore`
 
 ## 2. CLI 參數解析
 
-- [ ] 2.1 實作 CLI flag 解析：`--list`、`--delete <名稱>`、positional arg 作為快捷名稱
-- [ ] 2.2 實作 `--list` 功能：讀取 notify.yaml，格式化輸出所有快捷
-- [ ] 2.3 實作 `--delete` 功能：從 notify.yaml 移除指定快捷，處理不存在的情況
+- [x] 2.1 實作 CLI flag 解析：`--list`、`--delete <名稱>`、positional arg 作為快捷名稱
+- [x] 2.2 實作 `--list` 功能：讀取 notify.yaml，格式化輸出所有快捷
+- [x] 2.3 實作 `--delete` 功能：從 notify.yaml 移除指定快捷，處理不存在的情況
 
 ## 3. 快捷儲存
 
