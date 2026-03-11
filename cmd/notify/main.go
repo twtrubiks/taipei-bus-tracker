@@ -16,10 +16,9 @@ import (
 
 	"github.com/twtrubiks/taipei-bus-tracker/internal/cache"
 	"github.com/twtrubiks/taipei-bus-tracker/internal/config"
-	"github.com/twtrubiks/taipei-bus-tracker/internal/ebus"
 	"github.com/twtrubiks/taipei-bus-tracker/internal/handler"
 	"github.com/twtrubiks/taipei-bus-tracker/internal/model"
-	"github.com/twtrubiks/taipei-bus-tracker/internal/tdx"
+	"github.com/twtrubiks/taipei-bus-tracker/internal/provider"
 )
 
 const defaultCity = "Taipei"
@@ -27,6 +26,7 @@ const defaultCity = "Taipei"
 func main() {
 	listFlag := flag.Bool("list", false, "列出所有快捷")
 	deleteFlag := flag.String("delete", "", "刪除指定快捷")
+	providerFlag := flag.String("provider", "", "資料來源模式: auto, tdx, ebus")
 	flag.Parse()
 
 	// Handle --delete
@@ -49,20 +49,17 @@ func main() {
 		log.Fatalf("設定載入失敗: %v", err)
 	}
 
-	var primary model.BusDataSource
-	if cfg.TDX.ClientID != "" && cfg.TDX.ClientSecret != "" {
-		primary = tdx.NewProvider(cfg.TDX.ClientID, cfg.TDX.ClientSecret)
-		fmt.Println("TDX provider 已初始化")
+	// Provider mode: flag > config (env already merged in config.Load)
+	providerMode := cfg.Provider
+	if *providerFlag != "" {
+		providerMode = *providerFlag
 	}
 
-	ebusProvider := ebus.NewProvider()
-	var fallbackSrc model.BusDataSource = ebusProvider
-
-	if primary == nil {
-		primary = ebusProvider
-		fallbackSrc = nil
-		fmt.Println("使用 eBus 作為主要資料來源（無 TDX 憑證）")
+	mode, primary, fallbackSrc, err := provider.Build(cfg, providerMode)
+	if err != nil {
+		log.Fatalf("Provider 初始化失敗: %v", err)
 	}
+	fmt.Printf("Provider 模式: %s\n", mode)
 
 	c := cache.New(30 * time.Second)
 	defer c.Close()

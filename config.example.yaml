@@ -2,6 +2,9 @@
 port: 8080
 static_path: ./static
 
+# Provider mode: auto | tdx | ebus (or use env: BUS_PROVIDER, or CLI --provider)
+provider: auto
+
 # TDX API credentials (or use env: TDX_CLIENT_ID, TDX_CLIENT_SECRET)
 # ref https://github.com/tdxmotc/SampleCode
 tdx:

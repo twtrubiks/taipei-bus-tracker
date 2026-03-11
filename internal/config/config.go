@@ -15,6 +15,7 @@ type TDXConfig struct {
 type Config struct {
 	Port       int       `yaml:"port"`
 	StaticPath string    `yaml:"static_path"`
+	Provider   string    `yaml:"provider"`
 	TDX        TDXConfig `yaml:"tdx"`
 }
 
@@ -45,6 +46,9 @@ func Load(path string) (*Config, error) {
 	}
 	if v := os.Getenv("TDX_CLIENT_SECRET"); v != "" {
 		cfg.TDX.ClientSecret = v
+	}
+	if v := os.Getenv("BUS_PROVIDER"); v != "" {
+		cfg.Provider = v
 	}
 
 	return cfg, nil
