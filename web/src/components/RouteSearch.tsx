@@ -8,7 +8,7 @@ export default function RouteSearch() {
   const [results, setResults] = useState<Route[]>([]);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;

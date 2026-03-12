@@ -23,7 +23,7 @@ export function useFavoritesEta(
   ) => void,
 ): FavoriteETA[] {
   const [etaMap, setEtaMap] = useState<Map<string, StopETA>>(new Map());
-  const timerRef = useRef<ReturnType<typeof setInterval>>();
+  const timerRef = useRef<ReturnType<typeof setInterval>>(undefined);
   const onEtaFetchedRef = useRef(onEtaFetched);
   const resolveFavoriteRef = useRef(resolveFavorite);
   const favoritesRef = useRef(favorites);

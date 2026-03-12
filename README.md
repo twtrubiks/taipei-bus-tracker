@@ -63,8 +63,39 @@ make check
 
 ## 部署
 
+### 1. 建置與複製
+
 ```bash
-# 使用 systemd
-sudo cp taipei-bus.service /etc/systemd/system/
-sudo systemctl enable --now taipei-bus
+make build
+
+# 複製到 server
+scp taipei-bus config.yaml your-server:/opt/taipei-bus-tracker/
+scp -r static/ your-server:/opt/taipei-bus-tracker/static/
 ```
+
+### 2. systemd 服務
+
+```bash
+sudo cp deploy/taipei-bus-tracker.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now taipei-bus-tracker
+```
+
+### 3. nginx + HTTPS (Let's Encrypt)
+
+```bash
+# 安裝 certbot
+sudo apt install nginx certbot python3-certbot-nginx
+
+# 取得 SSL 憑證
+sudo certbot --nginx -d your-domain.com
+
+# 複製 nginx 設定（修改 your-domain.com 為實際域名）
+sudo cp deploy/nginx-taipei-bus.conf /etc/nginx/sites-available/taipei-bus
+sudo ln -s /etc/nginx/sites-available/taipei-bus /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+設定檔在 `deploy/` 目錄：
+- `taipei-bus-tracker.service` — systemd 服務
+- `nginx-taipei-bus.conf` — nginx 反向代理 + HTTPS

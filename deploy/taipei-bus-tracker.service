@@ -1,0 +1,26 @@
+[Unit]
+Description=Taipei Bus Tracker
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/taipei-bus-tracker
+ExecStart=/opt/taipei-bus-tracker/taipei-bus
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=10
+LimitNOFILE=65535
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=taipei-bus-tracker
+EnvironmentFile=-/opt/taipei-bus-tracker/.env
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/opt/taipei-bus-tracker
+
+[Install]
+WantedBy=multi-user.target

@@ -7,7 +7,7 @@ const POLL_INTERVAL = 15_000;
 export function useEta(routeId: string, direction: number) {
   const [data, setData] = useState<ETAResponse | null>(null);
   const [error, setError] = useState<Error | null>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval>>();
+  const timerRef = useRef<ReturnType<typeof setInterval>>(undefined);
 
   useEffect(() => {
     if (!routeId) return;

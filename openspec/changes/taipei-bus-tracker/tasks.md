@@ -71,6 +71,6 @@
 
 ## 7. 部署
 
-- [ ] 7.1 建立 Makefile：`make build` 一鍵完成 Go build + React build + 複製 static/
-- [ ] 7.2 建立 systemd service file（自動啟動、crash 5 秒後重啟、日誌管理）
-- [ ] 7.3 端到端測試：在 server 上部署，電腦 + 手機瀏覽器驗證所有功能
+- [x] 7.1 建立 Makefile：`make build` 一鍵完成 Go build + React build + 複製 static/
+- [x] 7.2 建立 systemd service file（自動啟動、crash 5 秒後重啟、日誌管理）
+- [x] 7.3 端到端測試：在 server 上部署，電腦 + 手機瀏覽器驗證所有功能
