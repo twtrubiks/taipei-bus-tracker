@@ -2,12 +2,14 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"log"
 	"os"
 	"strconv"
 	"strings"
 
+	"github.com/twtrubiks/taipei-bus-tracker/internal/model"
 	"gopkg.in/yaml.v3"
 )
 
@@ -16,15 +18,51 @@ const notifyConfigPath = "notify.yaml"
 // Shortcut represents a saved bus stop monitoring preset.
 type Shortcut struct {
 	Name         string `yaml:"name"`
-	RouteID      string `yaml:"route_id"`
 	RouteName    string `yaml:"route_name"`
 	StartStop    string `yaml:"start_stop"`
 	EndStop      string `yaml:"end_stop"`
 	Direction    int    `yaml:"direction"`
-	StopID       string `yaml:"stop_id"`
 	StopName     string `yaml:"stop_name"`
 	StopSequence int    `yaml:"stop_sequence"`
 	Threshold    int    `yaml:"threshold"`
+	TDXRouteID   string `yaml:"tdx_route_id,omitempty"`
+	TDXStopID    string `yaml:"tdx_stop_id,omitempty"`
+	EBusRouteID  string `yaml:"ebus_route_id,omitempty"`
+	EBusStopID   string `yaml:"ebus_stop_id,omitempty"`
+}
+
+// RouteID returns the route ID for the given source ("tdx" or "ebus").
+func (s *Shortcut) RouteID(source string) string {
+	if source == "tdx" {
+		return s.TDXRouteID
+	}
+	return s.EBusRouteID
+}
+
+// StopID returns the stop ID for the given source ("tdx" or "ebus").
+func (s *Shortcut) StopID(source string) string {
+	if source == "tdx" {
+		return s.TDXStopID
+	}
+	return s.EBusStopID
+}
+
+// SetRouteID sets the route ID for the given source.
+func (s *Shortcut) SetRouteID(source, id string) {
+	if source == "tdx" {
+		s.TDXRouteID = id
+	} else {
+		s.EBusRouteID = id
+	}
+}
+
+// SetStopID sets the stop ID for the given source.
+func (s *Shortcut) SetStopID(source, id string) {
+	if source == "tdx" {
+		s.TDXStopID = id
+	} else {
+		s.EBusStopID = id
+	}
 }
 
 // NotifyConfig is the top-level structure of notify.yaml.
@@ -69,6 +107,19 @@ func findShortcut(cfg *NotifyConfig, name string) *Shortcut {
 		}
 	}
 	return nil
+}
+
+// updateShortcut persists an updated shortcut back to notify.yaml.
+func updateShortcut(s *Shortcut) error {
+	cfg, err := loadNotifyConfig()
+	if err != nil {
+		return err
+	}
+	existing := findShortcut(cfg, s.Name)
+	if existing != nil {
+		*existing = *s
+	}
+	return saveNotifyConfig(cfg)
 }
 
 // formatDirection returns "去程" or "回程".
@@ -139,6 +190,23 @@ func deleteShortcut(name string) {
 	fmt.Printf("✓ 已刪除快捷「%s」\n", name)
 }
 
+// buildShortcut creates a Shortcut with the route/stop IDs stored in the correct
+// source-specific fields based on the route's Source.
+func buildShortcut(route model.Route, stop model.Stop, direction, threshold int) Shortcut {
+	s := Shortcut{
+		RouteName:    route.Name,
+		StartStop:    route.StartStop,
+		EndStop:      route.EndStop,
+		Direction:    direction,
+		StopName:     stop.Name,
+		StopSequence: stop.Sequence,
+		Threshold:    threshold,
+	}
+	s.SetRouteID(route.Source, route.RouteID)
+	s.SetStopID(route.Source, stop.StopID)
+	return s
+}
+
 // promptSaveShortcut asks the user for a shortcut name and saves it.
 // If the name already exists, it shows the existing config and asks for overwrite confirmation.
 func promptSaveShortcut(scanner *bufio.Scanner, s Shortcut) {
@@ -187,6 +255,40 @@ func promptSaveShortcut(scanner *bufio.Scanner, s Shortcut) {
 		return
 	}
 	fmt.Printf("✓ 已儲存快捷「%s」\n", name)
+}
+
+// resolveShortcutID uses routeName + stopName to look up the IDs for the given source.
+// It searches routes, finds the matching route, gets stops, and matches by stop name.
+// Returns the resolved routeID and stopID, or empty strings on failure.
+func resolveShortcutID(ctx context.Context, ds model.BusDataSource, city string, s *Shortcut, direction int, source string) (routeID, stopID string, err error) {
+	routes, err := ds.SearchRoutes(ctx, city, s.RouteName)
+	if err != nil {
+		return "", "", fmt.Errorf("反查路線失敗: %w", err)
+	}
+
+	var matchedRoute *model.Route
+	for i, r := range routes {
+		if r.Name == s.RouteName {
+			matchedRoute = &routes[i]
+			break
+		}
+	}
+	if matchedRoute == nil {
+		return "", "", fmt.Errorf("找不到路線「%s」", s.RouteName)
+	}
+
+	stops, err := ds.GetStops(ctx, city, matchedRoute.RouteID, direction)
+	if err != nil {
+		return "", "", fmt.Errorf("反查站點失敗: %w", err)
+	}
+
+	for _, st := range stops {
+		if st.Name == s.StopName {
+			return matchedRoute.RouteID, st.StopID, nil
+		}
+	}
+
+	return "", "", fmt.Errorf("在路線「%s」中找不到站點「%s」", s.RouteName, s.StopName)
 }
 
 // loadShortcut loads a shortcut by name. Exits on error.

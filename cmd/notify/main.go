@@ -69,6 +69,8 @@ func main() {
 	ctx, cancelSignal := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancelSignal()
 
+	primarySource := provider.PrimarySource(cfg, providerMode)
+
 	var routeID, routeName, startStop, endStop string
 	var direction, threshold int
 	var stop model.Stop
@@ -82,12 +84,38 @@ func main() {
 	}
 
 	if shortcut != nil {
-		routeID = shortcut.RouteID
+		// Lazy resolve: if current provider's ID is empty, resolve by name
+		if shortcut.RouteID(primarySource) == "" {
+			log.Printf("快捷「%s」缺少 %s ID，嘗試名稱反查...", shortcut.Name, primarySource)
+			resolvedRouteID, resolvedStopID, err := resolveShortcutID(ctx, svc, defaultCity, shortcut, shortcut.Direction, primarySource)
+			if err != nil {
+				log.Printf("⚠ 反查失敗: %v（使用已有 ID 繼續）", err)
+			} else {
+				shortcut.SetRouteID(primarySource, resolvedRouteID)
+				shortcut.SetStopID(primarySource, resolvedStopID)
+				if err := updateShortcut(shortcut); err != nil {
+					log.Printf("回寫 notify.yaml 失敗: %v", err)
+				} else {
+					log.Printf("✓ 已補齊 %s ID 並回寫 notify.yaml", primarySource)
+				}
+			}
+		}
+
+		// Use primary source ID; fall back to other source if empty
+		effectiveSource := primarySource
+		if shortcut.RouteID(primarySource) == "" {
+			if primarySource == provider.ModeTDX {
+				effectiveSource = provider.ModeEBus
+			} else {
+				effectiveSource = provider.ModeTDX
+			}
+		}
+		routeID = shortcut.RouteID(effectiveSource)
+		stop = model.Stop{StopID: shortcut.StopID(effectiveSource), Name: shortcut.StopName, Sequence: shortcut.StopSequence}
 		routeName = shortcut.RouteName
 		startStop = shortcut.StartStop
 		endStop = shortcut.EndStop
 		direction = shortcut.Direction
-		stop = model.Stop{StopID: shortcut.StopID, Name: shortcut.StopName, Sequence: shortcut.StopSequence}
 		threshold = shortcut.Threshold
 	} else {
 		scanner := bufio.NewScanner(os.Stdin)
@@ -113,17 +141,11 @@ func main() {
 		startStop = route.StartStop
 		endStop = route.EndStop
 
-		promptSaveShortcut(scanner, Shortcut{
-			RouteID:      routeID,
-			RouteName:    routeName,
-			StartStop:    startStop,
-			EndStop:      endStop,
-			Direction:    direction,
-			StopID:       stop.StopID,
-			StopName:     stop.Name,
-			StopSequence: stop.Sequence,
-			Threshold:    threshold,
-		})
+		// Use route.Source if available (from the actual API response), otherwise use primarySource
+		if route.Source == "" {
+			route.Source = primarySource
+		}
+		promptSaveShortcut(scanner, buildShortcut(route, stop, direction, threshold))
 	}
 
 	notifyCmd := detectNotifyTool()

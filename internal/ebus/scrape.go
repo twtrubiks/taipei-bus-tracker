@@ -36,6 +36,7 @@ func parseSearchRoutes(html string) []model.Route {
 			Name:      name,
 			StartStop: startStop,
 			EndStop:   endStop,
+			Source:    "ebus",
 		})
 	}
 	return routes
@@ -87,6 +88,7 @@ func parseStopsHTML(html string, direction int) []model.Stop {
 			StopID:   strings.TrimSpace(m[3]),
 			Name:     strings.TrimSpace(m[2]),
 			Sequence: seq,
+			Source:   "ebus",
 		})
 	}
 	return stops

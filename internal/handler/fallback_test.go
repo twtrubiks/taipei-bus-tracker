@@ -159,6 +159,36 @@ func TestFallbackGetStops_PrimaryFails_FallbackSuccess(t *testing.T) {
 	}
 }
 
+func TestFallbackSearchRoutes_FallbackSuccessHasSource(t *testing.T) {
+	primary := &mockProvider{err: errUpstream}
+	fallback := &mockProvider{routes: []model.Route{{RouteID: "EB1", Name: "299", Source: "ebus"}}}
+	c := cache.New(10 * time.Second)
+
+	svc := NewFallbackService(primary, fallback, c)
+	routes, err := svc.SearchRoutes(context.Background(), "Taipei", "299")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if routes[0].Source != "ebus" {
+		t.Errorf("expected Source=ebus, got %q", routes[0].Source)
+	}
+}
+
+func TestFallbackGetStops_FallbackSuccessHasSource(t *testing.T) {
+	primary := &mockProvider{err: errUpstream}
+	fallback := &mockProvider{stops: []model.Stop{{StopID: "S1", Name: "台北車站", Sequence: 1, Source: "ebus"}}}
+	c := cache.New(10 * time.Second)
+
+	svc := NewFallbackService(primary, fallback, c)
+	stops, err := svc.GetStops(context.Background(), "Taipei", "R1", 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stops[0].Source != "ebus" {
+		t.Errorf("expected Source=ebus, got %q", stops[0].Source)
+	}
+}
+
 func TestFallbackGetStops_BothFail_CacheHit(t *testing.T) {
 	primary := &mockProvider{err: fmt.Errorf("timeout")}
 	fallback := &mockProvider{err: fmt.Errorf("error")}

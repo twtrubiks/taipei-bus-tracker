@@ -46,3 +46,22 @@ func Build(cfg *config.Config, mode string) (normalizedMode string, primary, fal
 
 	return mode, primary, fallback, nil
 }
+
+// PrimarySource returns the source label ("tdx" or "ebus") of the primary provider
+// for the given mode and config. This determines which ID fields to use in shortcuts.
+func PrimarySource(cfg *config.Config, mode string) string {
+	if mode == "" {
+		mode = ModeAuto
+	}
+	switch mode {
+	case ModeTDX:
+		return ModeTDX
+	case ModeEBus:
+		return ModeEBus
+	default: // ModeAuto
+		if cfg.TDX.ClientID != "" && cfg.TDX.ClientSecret != "" {
+			return ModeTDX
+		}
+		return ModeEBus
+	}
+}

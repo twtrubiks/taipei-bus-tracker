@@ -42,6 +42,7 @@ func convertRoutes(tdxRoutes []TDXRoute) []model.Route {
 			Name:      r.RouteName.ZhTw,
 			StartStop: r.DepartureStopNameZh,
 			EndStop:   r.DestinationStopNameZh,
+			Source:    "tdx",
 		})
 	}
 	return routes
@@ -59,6 +60,7 @@ func convertStops(stopOfRoutes []TDXStopOfRoute) []model.Stop {
 			StopID:   s.StopUID,
 			Name:     s.StopName.ZhTw,
 			Sequence: s.StopSequence,
+			Source:   "tdx",
 		})
 	}
 	return stops

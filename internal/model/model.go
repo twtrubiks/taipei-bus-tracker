@@ -15,12 +15,14 @@ type Route struct {
 	Name      string `json:"routeName"`
 	StartStop string `json:"startStop"`
 	EndStop   string `json:"endStop"`
+	Source    string `json:"source"`
 }
 
 type Stop struct {
 	StopID   string `json:"stopId"`
 	Name     string `json:"stopName"`
 	Sequence int    `json:"sequence"`
+	Source   string `json:"source"`
 }
 
 type Bus struct {
