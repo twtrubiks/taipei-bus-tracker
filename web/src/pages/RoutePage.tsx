@@ -64,14 +64,14 @@ export default function RoutePage() {
     if (isFavorite(routeId, direction, stop.stopId)) {
       removeFavorite(routeId, direction, stop.stopId);
     } else {
-      addFavorite(toFavorite(stop));
+      addFavorite(toFavorite(stop), etaData?.source);
     }
   };
 
   const handleSetAlert = (stop: Stop, minutes: number) => {
     // Auto-favorite so homepage polling can trigger the notification
     if (!isFavorite(routeId, direction, stop.stopId)) {
-      addFavorite(toFavorite(stop));
+      addFavorite(toFavorite(stop), etaData?.source);
     }
     addAlert({
       routeId,

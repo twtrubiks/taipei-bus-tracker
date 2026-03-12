@@ -3,12 +3,14 @@ export interface Route {
   routeName: string;
   startStop: string;
   endStop: string;
+  source?: string;
 }
 
 export interface Stop {
   stopId: string;
   stopName: string;
   sequence: number;
+  source?: string;
 }
 
 export interface Bus {
@@ -40,4 +42,8 @@ export interface Favorite {
   stopId: string;
   stopName: string;
   sequence: number;
+  tdxRouteId?: string;
+  ebusRouteId?: string;
+  tdxStopId?: string;
+  ebusStopId?: string;
 }

@@ -56,19 +56,19 @@
 
 ### 8. Web 收藏雙 ID 結構
 
-- [ ] 8.1 `web/src/api/types.ts`：Favorite 型別擴充為雙 ID（tdxRouteId / ebusRouteId / tdxStopId / ebusStopId）
-- [ ] 8.2 `web/src/hooks/useFavorites.ts`：localStorage 讀取時偵測舊格式，自動遷移為雙 ID
-- [ ] 8.3 `web/src/hooks/useFavorites.ts`：addFavorite 依 source 存入正確的 ID 欄位
-- [ ] 8.4 `web/src/hooks/useFavoritesEta.ts`：查詢 ETA 時依當前 provider 選用正確的 ID
-- [ ] 8.5 Web 端：fallback 回應時，若第二組 ID 為空，順便存入
+- [x] 8.1 `web/src/api/types.ts`：Favorite 型別擴充為雙 ID（tdxRouteId / ebusRouteId / tdxStopId / ebusStopId）
+- [x] 8.2 ~~`web/src/hooks/useFavorites.ts`：localStorage 讀取時偵測舊格式，自動遷移為雙 ID~~ — 已簡化，不需遷移（清除 localStorage 重新收藏即可）
+- [x] 8.3 `web/src/hooks/useFavorites.ts`：addFavorite 依 source 存入正確的 ID 欄位
+- [x] 8.4 `web/src/hooks/useFavoritesEta.ts`：查詢 ETA 時依當前 provider 選用正確的 ID
+- [x] 8.5 Web 端：fallback 回應時，若第二組 ID 為空，順便存入
 
 ### 9. 單元測試（Web）
 
-- [ ] 9.1 `web/src/hooks/useFavorites.test.ts`：localStorage 舊格式遷移測試
+- [x] ~~9.1 `web/src/hooks/useFavorites.test.ts`：localStorage 舊格式遷移測試~~ — 已移除，不需要舊格式遷移（與 CLI 端策略一致）
 
 ### 10. 第二段驗證
 
-- [ ] 10.1 `go build ./...` 編譯通過
-- [ ] 10.2 `go test ./...` 全部通過
-- [ ] 10.3 Web `npm run lint` + `npm test` 通過
-- [ ] 10.4 手動測試：Web 收藏在切換 provider 後仍能正常顯示 ETA
+- [x] 10.1 `go build ./...` 編譯通過
+- [x] 10.2 `go test ./...` 全部通過
+- [x] 10.3 Web `npm run lint` + `npm test` 通過
+- [x] 10.4 手動測試：Web 收藏在切換 provider 後仍能正常顯示 ETA

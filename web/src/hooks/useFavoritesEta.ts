@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { getETA } from "../api/client";
+import { getETA, searchRoutes, getStops } from "../api/client";
 import type { Favorite, StopETA } from "../api/types";
 
 const POLL_INTERVAL = 15_000;
@@ -12,16 +12,29 @@ export interface FavoriteETA {
 /**
  * Fetches ETA data for a list of favorites by batching requests per route+direction.
  * Optional onEtaFetched callback is invoked per route+direction with fresh ETA data.
+ * Optional resolveFavorite callback is called when ETA fails and lazy resolve finds new IDs.
  */
 export function useFavoritesEta(
   favorites: Favorite[],
   onEtaFetched?: (routeId: string, direction: number, stops: StopETA[]) => void,
+  resolveFavorite?: (
+    oldRouteId: string, direction: number, oldStopId: string,
+    source: string, newRouteId: string, newStopId: string,
+  ) => void,
 ): FavoriteETA[] {
   const [etaMap, setEtaMap] = useState<Map<string, StopETA>>(new Map());
   const timerRef = useRef<ReturnType<typeof setInterval>>();
   const onEtaFetchedRef = useRef(onEtaFetched);
+  const resolveFavoriteRef = useRef(resolveFavorite);
+  const favoritesRef = useRef(favorites);
   useEffect(() => {
     onEtaFetchedRef.current = onEtaFetched;
+  });
+  useEffect(() => {
+    resolveFavoriteRef.current = resolveFavorite;
+  });
+  useEffect(() => {
+    favoritesRef.current = favorites;
   });
 
   // Derive unique route+direction combos
@@ -41,6 +54,44 @@ export function useFavoritesEta(
   useEffect(() => {
     if (routeKeys.length === 0) return;
     let cancelled = false;
+    const resolved = new Set<string>();
+    const inFlight = new Set<string>();
+
+    const tryResolve = async (rk: { routeId: string; direction: number }) => {
+      const resolveKey = `${rk.routeId}:${rk.direction}`;
+      if (resolved.has(resolveKey) || inFlight.has(resolveKey) || !resolveFavoriteRef.current) return;
+      inFlight.add(resolveKey);
+
+      const affected = favoritesRef.current.filter(
+        (f) => f.routeId === rk.routeId && f.direction === rk.direction,
+      );
+      if (affected.length === 0) return;
+
+      try {
+        const routes = await searchRoutes(affected[0].routeName);
+        if (cancelled) return;
+        const matched = routes.find((r) => r.routeName === affected[0].routeName);
+        if (!matched) return;
+
+        const stops = await getStops(matched.routeId, rk.direction);
+        if (cancelled) return;
+
+        for (const fav of affected) {
+          const stop = stops.find((s) => s.stopName === fav.stopName);
+          if (stop && resolveFavoriteRef.current) {
+            resolveFavoriteRef.current(
+              fav.routeId, fav.direction, fav.stopId,
+              matched.source ?? "", matched.routeId, stop.stopId,
+            );
+          }
+        }
+        resolved.add(resolveKey);
+      } catch {
+        // Resolve failed — allow retry on next poll
+      } finally {
+        inFlight.delete(resolveKey);
+      }
+    };
 
     const doFetch = async () => {
       const newMap = new Map<string, StopETA>();
@@ -48,15 +99,23 @@ export function useFavoritesEta(
         routeKeys.map((rk) => getETA(rk.routeId, rk.direction)),
       );
       if (cancelled) return;
+
+      const failedKeys: { routeId: string; direction: number }[] = [];
+
       results.forEach((result, i) => {
-        if (result.status === "fulfilled") {
-          const rk = routeKeys[i];
+        const rk = routeKeys[i];
+        if (result.status === "fulfilled" && result.value.stops.length > 0) {
           for (const stop of result.value.stops) {
             newMap.set(`${rk.routeId}:${rk.direction}:${stop.stopId}`, stop);
+            // Secondary key by stopName for cross-provider fallback matching
+            newMap.set(`${rk.routeId}:${rk.direction}:name:${stop.stopName}`, stop);
           }
           onEtaFetchedRef.current?.(rk.routeId, rk.direction, result.value.stops);
+        } else {
+          failedKeys.push(rk);
         }
       });
+
       // Only update state if data actually changed to avoid unnecessary re-renders
       setEtaMap((prev) => {
         if (prev.size !== newMap.size) return newMap;
@@ -66,6 +125,12 @@ export function useFavoritesEta(
         }
         return prev;
       });
+
+      // Lazy resolve for failed routes (async, non-blocking)
+      for (const rk of failedKeys) {
+        if (cancelled) return;
+        tryResolve(rk);
+      }
     };
 
     doFetch();
@@ -92,6 +157,8 @@ export function useFavoritesEta(
 
   return favorites.map((f) => ({
     favorite: f,
-    eta: etaMap.get(`${f.routeId}:${f.direction}:${f.stopId}`),
+    eta:
+      etaMap.get(`${f.routeId}:${f.direction}:${f.stopId}`) ??
+      etaMap.get(`${f.routeId}:${f.direction}:name:${f.stopName}`),
   }));
 }

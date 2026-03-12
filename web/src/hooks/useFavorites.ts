@@ -33,11 +33,19 @@ export function useFavorites() {
     saveFavorites(favorites);
   }, [favorites]);
 
-  const addFavorite = useCallback((fav: Favorite) => {
+  const addFavorite = useCallback((fav: Favorite, source?: string) => {
     setFavorites((prev) => {
       const key = favKey(fav);
       if (prev.some((f) => favKey(f) === key)) return prev;
-      return [...prev, fav];
+      const enriched = { ...fav };
+      if (source === "tdx") {
+        enriched.tdxRouteId = fav.routeId;
+        enriched.tdxStopId = fav.stopId;
+      } else if (source === "ebus") {
+        enriched.ebusRouteId = fav.routeId;
+        enriched.ebusStopId = fav.stopId;
+      }
+      return [...prev, enriched];
     });
   }, []);
 
@@ -46,6 +54,46 @@ export function useFavorites() {
       setFavorites((prev) =>
         prev.filter((f) => favKey(f) !== favKey({ routeId, direction, stopId })),
       );
+    },
+    [],
+  );
+
+  const updateFavoriteIds = useCallback(
+    (routeId: string, direction: number, stopId: string, source: string, newRouteId: string, newStopId: string) => {
+      setFavorites((prev) => {
+        const key = favKey({ routeId, direction, stopId });
+        const idx = prev.findIndex((f) => favKey(f) === key);
+        if (idx === -1) return prev;
+        const f = prev[idx];
+        const field = source === "tdx" ? "tdxRouteId" : "ebusRouteId";
+        const stopField = source === "tdx" ? "tdxStopId" : "ebusStopId";
+        if (f[field] && f[stopField]) return prev; // already populated
+        const updated = [...prev];
+        updated[idx] = { ...f, [field]: newRouteId, [stopField]: newStopId };
+        return updated;
+      });
+    },
+    [],
+  );
+
+  const resolveFavorite = useCallback(
+    (oldRouteId: string, direction: number, oldStopId: string, source: string, newRouteId: string, newStopId: string) => {
+      setFavorites((prev) => {
+        const key = favKey({ routeId: oldRouteId, direction, stopId: oldStopId });
+        const idx = prev.findIndex((f) => favKey(f) === key);
+        if (idx === -1) return prev;
+        const f = prev[idx];
+        const updated = [...prev];
+        updated[idx] = {
+          ...f,
+          routeId: newRouteId,
+          stopId: newStopId,
+          ...(source === "tdx"
+            ? { tdxRouteId: newRouteId, tdxStopId: newStopId }
+            : { ebusRouteId: newRouteId, ebusStopId: newStopId }),
+        };
+        return updated;
+      });
     },
     [],
   );
@@ -59,5 +107,5 @@ export function useFavorites() {
     [favorites],
   );
 
-  return { favorites, addFavorite, removeFavorite, isFavorite };
+  return { favorites, addFavorite, removeFavorite, isFavorite, updateFavoriteIds, resolveFavorite };
 }

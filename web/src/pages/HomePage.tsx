@@ -1,13 +1,41 @@
+import { useCallback, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useFavorites } from "../hooks/useFavorites";
 import { useFavoritesEta } from "../hooks/useFavoritesEta";
 import { useNotificationContext } from "../hooks/NotificationContext";
 import { statusColor } from "../utils/statusColor";
+import type { StopETA } from "../api/types";
 
 export default function HomePage() {
-  const { favorites, removeFavorite } = useFavorites();
+  const { favorites, removeFavorite, updateFavoriteIds, resolveFavorite } = useFavorites();
   const { checkAlerts } = useNotificationContext();
-  const favoritesEta = useFavoritesEta(favorites, checkAlerts);
+
+  const favoritesRef = useRef(favorites);
+  useEffect(() => {
+    favoritesRef.current = favorites;
+  });
+
+  const handleEtaFetched = useCallback(
+    (routeId: string, direction: number, stops: StopETA[]) => {
+      checkAlerts(routeId, direction, stops);
+      // Fill in second provider IDs from fallback response
+      if (stops.length === 0 || !stops[0].source) return;
+      const source = stops[0].source;
+      for (const f of favoritesRef.current) {
+        if (f.routeId !== routeId || f.direction !== direction) continue;
+        // Skip if provider IDs already populated
+        const hasIds = source === "tdx" ? f.tdxRouteId && f.tdxStopId : f.ebusRouteId && f.ebusStopId;
+        if (hasIds) continue;
+        const matched = stops.find((s) => s.stopName === f.stopName);
+        if (matched) {
+          updateFavoriteIds(f.routeId, f.direction, f.stopId, source, routeId, matched.stopId);
+        }
+      }
+    },
+    [checkAlerts, updateFavoriteIds],
+  );
+
+  const favoritesEta = useFavoritesEta(favorites, handleEtaFetched, resolveFavorite);
 
   return (
     <div className="mx-auto max-w-lg p-4 md:max-w-2xl">

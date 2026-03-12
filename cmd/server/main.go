@@ -8,10 +8,8 @@ import (
 
 	"github.com/twtrubiks/taipei-bus-tracker/internal/cache"
 	"github.com/twtrubiks/taipei-bus-tracker/internal/config"
-	"github.com/twtrubiks/taipei-bus-tracker/internal/ebus"
 	"github.com/twtrubiks/taipei-bus-tracker/internal/handler"
-	"github.com/twtrubiks/taipei-bus-tracker/internal/model"
-	"github.com/twtrubiks/taipei-bus-tracker/internal/tdx"
+	"github.com/twtrubiks/taipei-bus-tracker/internal/provider"
 )
 
 func main() {
@@ -20,25 +18,12 @@ func main() {
 		log.Fatalf("failed to load config: %v", err)
 	}
 
-	// Initialize providers
-	var primary model.BusDataSource
-	if cfg.TDX.ClientID != "" && cfg.TDX.ClientSecret != "" {
-		primary = tdx.NewProvider(cfg.TDX.ClientID, cfg.TDX.ClientSecret)
-		log.Println("TDX provider initialized")
-	} else {
-		log.Println("WARNING: TDX credentials not set, TDX provider disabled")
+	// Initialize providers based on config provider mode
+	mode, primary, fallback, err := provider.Build(cfg, cfg.Provider)
+	if err != nil {
+		log.Fatalf("provider init failed: %v", err)
 	}
-
-	var fallback model.BusDataSource
-	ebusProvider := ebus.NewProvider()
-	fallback = ebusProvider
-
-	// If no TDX, use eBus as primary
-	if primary == nil {
-		primary = ebusProvider
-		fallback = nil
-		log.Println("Using eBus as primary provider (no TDX credentials)")
-	}
+	log.Printf("Provider mode: %s (primary: %s)", mode, provider.PrimarySource(cfg, mode))
 
 	c := cache.New(30 * time.Second)
 	defer c.Close()
