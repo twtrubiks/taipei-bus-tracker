@@ -108,6 +108,23 @@ func (h *Handlers) GetETA(w http.ResponseWriter, r *http.Request) {
 		source = etas[0].Source
 	}
 
+	// eBus ETA doesn't include stopId/stopName — fill from GetStops by sequence
+	if source == "ebus" && len(etas) > 0 && etas[0].StopID == "" {
+		stops, err := h.Fallback.GetStops(ctx, city, routeID, direction)
+		if err == nil {
+			stopBySeq := make(map[int]model.Stop, len(stops))
+			for _, s := range stops {
+				stopBySeq[s.Sequence] = s
+			}
+			for i := range etas {
+				if s, ok := stopBySeq[etas[i].Sequence]; ok {
+					etas[i].StopID = s.StopID
+					etas[i].StopName = s.Name
+				}
+			}
+		}
+	}
+
 	resp := ETAResponse{
 		Route:     routeID,
 		Direction: direction,
