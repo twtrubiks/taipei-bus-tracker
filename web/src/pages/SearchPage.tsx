@@ -1,15 +1,9 @@
-import { Link } from "react-router-dom";
 import RouteSearch from "../components/RouteSearch";
 
 export default function SearchPage() {
   return (
     <div className="mx-auto max-w-lg p-4 md:max-w-2xl">
-      <div className="mb-4 flex items-center gap-2">
-        <Link to="/" className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
-          &larr; 返回
-        </Link>
-        <h1 className="text-xl font-bold">搜尋路線</h1>
-      </div>
+      <h1 className="mb-4 text-xl font-bold">搜尋路線</h1>
       <RouteSearch />
     </div>
   );
