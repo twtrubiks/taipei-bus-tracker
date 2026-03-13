@@ -27,4 +27,4 @@ build-go:
 	go build -o taipei-bus ./cmd/server
 
 build-web:
-	cd web && npm run build
+	cd web && npm install && npm run build
