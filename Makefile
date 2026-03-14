@@ -1,4 +1,4 @@
-.PHONY: lint lint-go lint-web test test-go test-web check build
+.PHONY: lint lint-go lint-web test test-go test-web check build build-notify
 
 lint: lint-go lint-web
 
@@ -25,6 +25,9 @@ build: build-web build-go
 
 build-go:
 	go build -o taipei-bus ./cmd/server
+
+build-notify:
+	go build -o taipei-bus-notify ./cmd/notify
 
 build-web:
 	cd web && npm install && npm run build
