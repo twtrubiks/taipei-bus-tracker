@@ -60,6 +60,7 @@ make check
 | TDX Client ID | `TDX_CLIENT_ID` | `tdx.client_id` | - |
 | TDX Client Secret | `TDX_CLIENT_SECRET` | `tdx.client_secret` | - |
 | Static Files Path | `BUS_STATIC_PATH` | `static_path` | `./static` |
+| Provider Mode | `BUS_PROVIDER` | `provider` | `auto` |
 
 ## 部署
 
@@ -99,3 +100,40 @@ sudo nginx -t && sudo systemctl reload nginx
 設定檔在 `deploy/` 目錄：
 - `taipei-bus-tracker.service` — systemd 服務
 - `nginx-taipei-bus.conf` — nginx 反向代理 + HTTPS
+
+### 4. 僅 HTTP 測試
+
+不需要設定 nginx，直接執行 binary 即可測試：
+
+```bash
+cd /opt/taipei-bus-tracker
+./taipei-bus
+# 預設監聽 http://localhost:8080
+```
+
+指定 port：
+
+```bash
+BUS_PORT=3000 ./taipei-bus
+```
+
+### 5. Provider 切換
+
+資料源支援三種模式，透過 `config.yaml` 或環境變數設定：
+
+| 模式 | 說明 |
+|------|------|
+| `auto` | TDX 為主、eBus 備援（預設） |
+| `tdx` | 僅使用 TDX（需設定 client_id / client_secret） |
+| `ebus` | 僅使用 eBus（不需額外設定） |
+
+```yaml
+# config.yaml
+provider: ebus
+```
+
+或使用環境變數：
+
+```bash
+BUS_PROVIDER=ebus ./taipei-bus
+```
