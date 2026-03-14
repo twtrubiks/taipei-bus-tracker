@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { Stop, StopETA } from "../api/types";
 import type { NotificationAlert } from "../hooks/useNotification";
+import { AlertBell, AlertMenu } from "./AlertButton";
 import { statusColor } from "../utils/statusColor";
 
 interface Props {
@@ -14,8 +15,6 @@ interface Props {
   onSetAlert?: (stop: Stop, minutes: number) => void;
   onRemoveAlert?: (stop: Stop) => void;
 }
-
-const ALERT_OPTIONS = [1, 3, 5];
 
 export default function StopList({
   stops,
@@ -72,18 +71,14 @@ export default function StopList({
                 )}
               </div>
               {onSetAlert && (
-                <button
-                  type="button"
-                  aria-label={alert ? `已設定 ${alert.thresholdMinutes} 分鐘提醒` : "設定到站提醒"}
-                  className={`text-sm ${alert ? "text-amber-500" : "text-gray-400 hover:text-amber-500"}`}
+                <AlertBell
+                  alert={alert}
                   onClick={() =>
                     alert
                       ? onRemoveAlert?.(stop)
                       : setAlertMenuStop(showMenu ? null : stop.stopId)
                   }
-                >
-                  {alert ? "\u{1F514}" : "\u{1F515}"}
-                </button>
+                />
               )}
               {onToggleFavorite && (
                 <button
@@ -97,21 +92,13 @@ export default function StopList({
               )}
             </div>
             {showMenu && onSetAlert && (
-              <div className="ml-9 mt-2 flex gap-2">
-                {ALERT_OPTIONS.map((min) => (
-                  <button
-                    key={min}
-                    type="button"
-                    className="rounded bg-amber-100 px-2 py-1 text-xs text-amber-700 hover:bg-amber-200"
-                    onClick={() => {
-                      onSetAlert(stop, min);
-                      setAlertMenuStop(null);
-                    }}
-                  >
-                    {min} 分鐘前
-                  </button>
-                ))}
-              </div>
+              <AlertMenu
+                className="ml-9"
+                onSelect={(min) => {
+                  onSetAlert(stop, min);
+                  setAlertMenuStop(null);
+                }}
+              />
             )}
           </li>
         );
