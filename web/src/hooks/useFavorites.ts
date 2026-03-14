@@ -84,13 +84,18 @@ export function useFavorites() {
         if (idx === -1) return prev;
         const f = prev[idx];
         const updated = [...prev];
+        // Preserve old provider IDs (old IDs belong to the opposite provider)
+        const oldFields = source === "ebus"
+          ? { tdxRouteId: f.tdxRouteId || oldRouteId, tdxStopId: f.tdxStopId || oldStopId }
+          : { ebusRouteId: f.ebusRouteId || oldRouteId, ebusStopId: f.ebusStopId || oldStopId };
         updated[idx] = {
           ...f,
           routeId: newRouteId,
           stopId: newStopId,
-          ...(source === "tdx"
-            ? { tdxRouteId: newRouteId, tdxStopId: newStopId }
-            : { ebusRouteId: newRouteId, ebusStopId: newStopId }),
+          ...oldFields,
+          ...(source === "ebus"
+            ? { ebusRouteId: newRouteId, ebusStopId: newStopId }
+            : { tdxRouteId: newRouteId, tdxStopId: newStopId }),
         };
         return updated;
       });

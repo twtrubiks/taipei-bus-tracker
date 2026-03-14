@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { getETA, searchRoutes, getStops } from "../api/client";
 import type { Favorite, StopETA } from "../api/types";
+import { normalizeName } from "../utils/normalize";
 
 const POLL_INTERVAL = 15_000;
 
@@ -77,11 +78,12 @@ export function useFavoritesEta(
         if (cancelled) return;
 
         for (const fav of affected) {
-          const stop = stops.find((s) => s.stopName === fav.stopName);
-          if (stop && resolveFavoriteRef.current) {
+          const normalizedFavStop = normalizeName(fav.stopName);
+          const stop = stops.find((s) => normalizeName(s.stopName) === normalizedFavStop);
+          if (stop && resolveFavoriteRef.current && matched.source) {
             resolveFavoriteRef.current(
               fav.routeId, fav.direction, fav.stopId,
-              matched.source ?? "", matched.routeId, stop.stopId,
+              matched.source, matched.routeId, stop.stopId,
             );
           }
         }

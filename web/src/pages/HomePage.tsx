@@ -3,7 +3,9 @@ import { Link } from "react-router-dom";
 import { useFavorites } from "../hooks/useFavorites";
 import { useFavoritesEta } from "../hooks/useFavoritesEta";
 import { useNotificationContext } from "../hooks/NotificationContext";
+import { searchRoutes, getStops } from "../api/client";
 import { statusColor } from "../utils/statusColor";
+import { normalizeName } from "../utils/normalize";
 import type { StopETA } from "../api/types";
 
 export default function HomePage() {
@@ -34,6 +36,59 @@ export default function HomePage() {
     },
     [checkAlerts, updateFavoriteIds],
   );
+
+  // Proactive resolve: on mount, check if favorites need ID conversion for current provider
+  const resolvedRef = useRef(false);
+  useEffect(() => {
+    if (resolvedRef.current) return;
+    const currentFavs = favoritesRef.current;
+    if (currentFavs.length === 0) return;
+    resolvedRef.current = true;
+    let cancelled = false;
+
+    const resolveAll = async () => {
+      // Group favorites by routeName + direction
+      const groups = new Map<string, typeof currentFavs>();
+      for (const f of currentFavs) {
+        const key = `${f.routeName}:${f.direction}`;
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key)!.push(f);
+      }
+
+      const resolveGroup = async (group: typeof currentFavs) => {
+        const sample = group[0];
+        const routes = await searchRoutes(sample.routeName);
+        if (cancelled) return;
+        const matched = routes.find((r) => r.routeName === sample.routeName);
+        if (!matched?.source || group.every((f) => f.routeId === matched.routeId)) return;
+
+        const stops = await getStops(matched.routeId, sample.direction);
+        if (cancelled) return;
+
+        for (const fav of group) {
+          if (fav.routeId === matched.routeId) continue;
+          const normalizedFavStop = normalizeName(fav.stopName);
+          const stop = stops.find(
+            (s) => normalizeName(s.stopName) === normalizedFavStop,
+          );
+          if (stop) {
+            resolveFavorite(
+              fav.routeId, fav.direction, fav.stopId,
+              matched.source, matched.routeId, stop.stopId,
+            );
+          }
+        }
+      };
+
+      await Promise.allSettled(
+        Array.from(groups.values()).map((group) => resolveGroup(group)),
+      );
+    };
+
+    resolveAll();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const favoritesEta = useFavoritesEta(favorites, handleEtaFetched, resolveFavorite);
 
