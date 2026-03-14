@@ -26,7 +26,7 @@ export default function RouteSearch() {
     timerRef.current = setTimeout(() => {
       setLoading(true);
       searchRoutes(trimmed)
-        .then(setResults)
+        .then((data) => setResults(data ?? []))
         .catch(() => setResults([]))
         .finally(() => setLoading(false));
     }, 300);

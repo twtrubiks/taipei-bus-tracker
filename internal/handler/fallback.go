@@ -70,7 +70,7 @@ func fallbackFetch[T any](
 		}
 	}
 
-	return nil, err
+	return items, err
 }
 
 func (f *FallbackService) SearchRoutes(ctx context.Context, city, keyword string) ([]model.Route, error) {
