@@ -39,8 +39,9 @@ describe("useNotification", () => {
     });
 
     // ETA = 120 seconds (2 min) <= 3 min threshold → should fire
-    act(() => {
+    await act(async () => {
       result.current.checkAlerts("r1", 0, [mockEta("s1", 120)]);
+      await vi.waitFor(() => expect(notificationSpy).toHaveBeenCalled());
     });
 
     expect(notificationSpy).toHaveBeenCalledWith("299 - 台北車站", {
@@ -71,10 +72,11 @@ describe("useNotification", () => {
       await result.current.addAlert(defaultAlert);
     });
 
-    act(() => {
+    await act(async () => {
       result.current.checkAlerts("r1", 0, [mockEta("s1", 120)]);
+      await vi.waitFor(() => expect(notificationSpy).toHaveBeenCalled());
     });
-    act(() => {
+    await act(async () => {
       result.current.checkAlerts("r1", 0, [mockEta("s1", 60)]);
     });
 
@@ -108,8 +110,9 @@ describe("useNotification", () => {
       });
     });
 
-    act(() => {
+    await act(async () => {
       result.current.checkAlerts("r2", 1, [mockEta("s5", 180)]);
+      await vi.waitFor(() => expect(notificationSpy).toHaveBeenCalled());
     });
 
     expect(notificationSpy).toHaveBeenCalledWith("307 - 板橋車站", {
@@ -139,8 +142,9 @@ describe("useNotification", () => {
       await result.current.addAlert(defaultAlert);
     });
 
-    act(() => {
+    await act(async () => {
       result.current.checkAlerts("r1", 0, [mockEta("s1", 120)]);
+      await vi.waitFor(() => expect(notificationSpy).toHaveBeenCalled());
     });
     expect(notificationSpy).toHaveBeenCalledTimes(1);
 
@@ -152,10 +156,10 @@ describe("useNotification", () => {
       await result.current.addAlert(defaultAlert);
     });
 
-    act(() => {
+    await act(async () => {
       result.current.checkAlerts("r1", 0, [mockEta("s1", 60)]);
+      await vi.waitFor(() => expect(notificationSpy).toHaveBeenCalledTimes(2));
     });
-    expect(notificationSpy).toHaveBeenCalledTimes(2);
   });
 
   it("does not fire for mismatched routeId or direction", async () => {
@@ -190,8 +194,9 @@ describe("useNotification", () => {
     // Re-mount → alerts should be loaded from localStorage
     const { result: result2 } = renderHook(() => useNotification());
 
-    act(() => {
+    await act(async () => {
       result2.current.checkAlerts("r1", 0, [mockEta("s1", 120)]);
+      await vi.waitFor(() => expect(notificationSpy).toHaveBeenCalled());
     });
     expect(notificationSpy).toHaveBeenCalledTimes(1);
   });

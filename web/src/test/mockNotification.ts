@@ -1,8 +1,8 @@
 import { vi } from "vitest";
 
 /**
- * Sets up a mock Notification API on window.
- * Returns the spy function that records `new Notification(...)` calls.
+ * Sets up a mock Notification API on window and mock ServiceWorker registration.
+ * Returns the spy function that records showNotification calls.
  */
 export function setupMockNotification(
   permission: string = "granted",
@@ -22,6 +22,14 @@ export function setupMockNotification(
     writable: true,
     configurable: true,
     value: MockNotification,
+  });
+
+  // Mock ServiceWorker registration with showNotification
+  const mockRegistration = { showNotification: spy };
+  Object.defineProperty(navigator, "serviceWorker", {
+    writable: true,
+    configurable: true,
+    value: { getRegistration: vi.fn().mockResolvedValue(mockRegistration) },
   });
 
   return spy;

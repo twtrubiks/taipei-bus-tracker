@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Link, useLocation } from "react-router-do
 import HomePage from "./pages/HomePage";
 import SearchPage from "./pages/SearchPage";
 import RoutePage from "./pages/RoutePage";
+import ErrorBoundary from "./components/ErrorBoundary";
 import { useDarkMode } from "./hooks/useDarkMode";
 import { NotificationProvider } from "./hooks/NotificationContext";
 
@@ -57,11 +58,13 @@ export default function App() {
               {isDark ? "\u2600\uFE0F 淺色" : "\u{1F319} 深色"}
             </button>
           </header>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/search" element={<SearchPage />} />
-            <Route path="/route/:routeId" element={<RoutePage />} />
-          </Routes>
+          <ErrorBoundary>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/search" element={<SearchPage />} />
+              <Route path="/route/:routeId" element={<RoutePage />} />
+            </Routes>
+          </ErrorBoundary>
           <BottomNav />
         </div>
       </NotificationProvider>

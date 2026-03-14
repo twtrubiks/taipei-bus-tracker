@@ -12,6 +12,19 @@ export interface NotificationAlert {
 
 const STORAGE_KEY = "bus-notifications";
 
+async function showNotification(title: string, options?: NotificationOptions): Promise<void> {
+  try {
+    const reg = await navigator.serviceWorker?.getRegistration();
+    if (reg) {
+      await reg.showNotification(title, options);
+    } else {
+      new Notification(title, options);
+    }
+  } catch (err) {
+    console.warn("[Notification]", err instanceof Error ? err.message : err);
+  }
+}
+
 function loadAlerts(): NotificationAlert[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -128,7 +141,7 @@ export function useNotification() {
         if (eta.eta <= thresholdSeconds) {
           firedRef.current.add(key);
           const minutes = Math.ceil(eta.eta / 60);
-          new Notification(`${alert.routeName} - ${alert.stopName}`, {
+          showNotification(`${alert.routeName} - ${alert.stopName}`, {
             body: `約 ${minutes} 分鐘後到站`,
             tag: key,
           });

@@ -69,8 +69,9 @@ describe("NotificationContext", () => {
     });
     expect(screen.getByTestId("count").textContent).toBe("1");
 
-    act(() => {
+    await act(async () => {
       screen.getByTestId("check").click();
+      await vi.waitFor(() => expect(notificationSpy).toHaveBeenCalled());
     });
     expect(notificationSpy).toHaveBeenCalledWith("299 - 台北車站", {
       body: "約 2 分鐘後到站",
@@ -89,10 +90,11 @@ describe("NotificationContext", () => {
       screen.getByTestId("add").click();
     });
 
-    act(() => {
+    await act(async () => {
       screen.getByTestId("check").click();
+      await vi.waitFor(() => expect(notificationSpy).toHaveBeenCalled());
     });
-    act(() => {
+    await act(async () => {
       screen.getByTestId("check").click();
     });
 
