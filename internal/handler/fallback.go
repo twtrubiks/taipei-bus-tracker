@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"strconv"
 
@@ -24,131 +25,86 @@ func NewFallbackService(primary, fallback model.BusDataSource, c *cache.Cache) *
 	}
 }
 
-func (f *FallbackService) SearchRoutes(ctx context.Context, city, keyword string) ([]model.Route, error) {
-	cacheKey := "routes:" + city + ":" + keyword
+// fallbackFetch is a generic cache-first fallback fetcher.
+func fallbackFetch[T any](
+	c *cache.Cache,
+	cacheKey string,
+	label string,
+	primaryFn func() ([]T, error),
+	fallbackFn func() ([]T, error),
+) ([]T, error) {
+	// 1. Fresh cache
+	if cached, ok := c.Get(cacheKey); ok {
+		if items, ok := cached.([]T); ok && len(items) > 0 {
+			return items, nil
+		}
+	}
 
-	routes, err := f.Primary.SearchRoutes(ctx, city, keyword)
-	if err == nil && len(routes) > 0 {
-		f.Cache.Set(cacheKey, routes)
-		return routes, nil
+	// 2. Primary
+	items, err := primaryFn()
+	if err == nil && len(items) > 0 {
+		c.Set(cacheKey, items)
+		return items, nil
 	}
 	if err != nil {
-		log.Printf("[fallback] SearchRoutes primary failed: %v", err)
+		log.Printf("[fallback] %s primary failed: %v", label, err)
 	}
 
-	if f.Fallback != nil {
-		routes, err = f.Fallback.SearchRoutes(ctx, city, keyword)
-		if err == nil && len(routes) > 0 {
-			f.Cache.Set(cacheKey, routes)
-			return routes, nil
+	// 3. Fallback
+	if fallbackFn != nil {
+		items, err = fallbackFn()
+		if err == nil && len(items) > 0 {
+			c.Set(cacheKey, items)
+			return items, nil
 		}
 		if err != nil {
-			log.Printf("[fallback] SearchRoutes fallback failed: %v", err)
+			log.Printf("[fallback] %s fallback failed: %v", label, err)
 		}
 	}
 
-	if cached, ok := f.Cache.Get(cacheKey); ok {
-		if routes, ok := cached.([]model.Route); ok && len(routes) > 0 {
-			return routes, nil
+	// 4. Stale cache
+	if cached, ok := c.GetStale(cacheKey); ok {
+		if items, ok := cached.([]T); ok && len(items) > 0 {
+			log.Printf("[fallback] %s: using stale cache", label)
+			return items, nil
 		}
-	}
-
-	if cached, ok := f.Cache.GetStale(cacheKey); ok {
-		if routes, ok := cached.([]model.Route); ok && len(routes) > 0 {
-			log.Printf("[fallback] SearchRoutes(%s, %s): using stale cache", city, keyword)
-			return routes, nil
-		}
-	}
-
-	if err == nil {
-		return routes, nil
 	}
 
 	return nil, err
+}
+
+func (f *FallbackService) SearchRoutes(ctx context.Context, city, keyword string) ([]model.Route, error) {
+	cacheKey := "routes:" + city + ":" + keyword
+	var fb func() ([]model.Route, error)
+	if f.Fallback != nil {
+		fb = func() ([]model.Route, error) { return f.Fallback.SearchRoutes(ctx, city, keyword) }
+	}
+	return fallbackFetch(f.Cache, cacheKey, fmt.Sprintf("SearchRoutes(%s, %s)", city, keyword),
+		func() ([]model.Route, error) { return f.Primary.SearchRoutes(ctx, city, keyword) },
+		fb,
+	)
 }
 
 func (f *FallbackService) GetStops(ctx context.Context, city, routeID string, direction int) ([]model.Stop, error) {
 	cacheKey := "stops:" + city + ":" + routeID + ":" + strconv.Itoa(direction)
-
-	stops, err := f.Primary.GetStops(ctx, city, routeID, direction)
-	if err == nil && len(stops) > 0 {
-		f.Cache.Set(cacheKey, stops)
-		return stops, nil
-	}
-	if err != nil {
-		log.Printf("[fallback] GetStops primary failed: %v", err)
-	}
-
+	var fb func() ([]model.Stop, error)
 	if f.Fallback != nil {
-		stops, err = f.Fallback.GetStops(ctx, city, routeID, direction)
-		if err == nil && len(stops) > 0 {
-			f.Cache.Set(cacheKey, stops)
-			return stops, nil
-		}
-		if err != nil {
-			log.Printf("[fallback] GetStops fallback failed: %v", err)
-		}
+		fb = func() ([]model.Stop, error) { return f.Fallback.GetStops(ctx, city, routeID, direction) }
 	}
-
-	if cached, ok := f.Cache.Get(cacheKey); ok {
-		if stops, ok := cached.([]model.Stop); ok && len(stops) > 0 {
-			return stops, nil
-		}
-	}
-
-	if cached, ok := f.Cache.GetStale(cacheKey); ok {
-		if stops, ok := cached.([]model.Stop); ok && len(stops) > 0 {
-			log.Printf("[fallback] GetStops(%s, %s, %d): using stale cache", city, routeID, direction)
-			return stops, nil
-		}
-	}
-
-	if err == nil {
-		return stops, nil
-	}
-
-	return nil, err
+	return fallbackFetch(f.Cache, cacheKey, fmt.Sprintf("GetStops(%s, %s, %d)", city, routeID, direction),
+		func() ([]model.Stop, error) { return f.Primary.GetStops(ctx, city, routeID, direction) },
+		fb,
+	)
 }
 
 func (f *FallbackService) GetETA(ctx context.Context, city, routeID string, direction int) ([]model.StopETA, error) {
 	cacheKey := "eta:" + city + ":" + routeID + ":" + strconv.Itoa(direction)
-
-	etas, err := f.Primary.GetETA(ctx, city, routeID, direction)
-	if err == nil && len(etas) > 0 {
-		f.Cache.Set(cacheKey, etas)
-		return etas, nil
-	}
-	if err != nil {
-		log.Printf("[fallback] GetETA primary failed: %v", err)
-	}
-
+	var fb func() ([]model.StopETA, error)
 	if f.Fallback != nil {
-		etas, err = f.Fallback.GetETA(ctx, city, routeID, direction)
-		if err == nil && len(etas) > 0 {
-			f.Cache.Set(cacheKey, etas)
-			return etas, nil
-		}
-		if err != nil {
-			log.Printf("[fallback] GetETA fallback failed: %v", err)
-		}
+		fb = func() ([]model.StopETA, error) { return f.Fallback.GetETA(ctx, city, routeID, direction) }
 	}
-
-	if cached, ok := f.Cache.Get(cacheKey); ok {
-		if etas, ok := cached.([]model.StopETA); ok && len(etas) > 0 {
-			return etas, nil
-		}
-	}
-
-	if cached, ok := f.Cache.GetStale(cacheKey); ok {
-		if etas, ok := cached.([]model.StopETA); ok && len(etas) > 0 {
-			log.Printf("[fallback] GetETA(%s, %s, %d): using stale cache", city, routeID, direction)
-			return etas, nil
-		}
-	}
-
-	if err == nil {
-		return etas, nil
-	}
-
-	return nil, err
+	return fallbackFetch(f.Cache, cacheKey, fmt.Sprintf("GetETA(%s, %s, %d)", city, routeID, direction),
+		func() ([]model.StopETA, error) { return f.Primary.GetETA(ctx, city, routeID, direction) },
+		fb,
+	)
 }
