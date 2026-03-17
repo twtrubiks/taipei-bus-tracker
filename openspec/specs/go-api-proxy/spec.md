@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+Go 後端 API，提供路線搜尋、站序查詢、即時到站時間等 RESTful endpoints。
+
+## Requirements
 
 ### Requirement: API 路線搜尋
 系統 SHALL 提供 `GET /api/routes/search?q={keyword}&city={city}` endpoint，根據關鍵字搜尋公車路線。city 預設為 Taipei。回傳路線列表包含 routeId、routeName、起站、迄站。

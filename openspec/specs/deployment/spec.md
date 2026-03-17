@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+部署相關配置，包含單一 binary build、systemd service 與 config 管理。
+
+## Requirements
 
 ### Requirement: 單一 Binary 部署
 Go backend SHALL 編譯為單一 binary，搭配 static/ 目錄（PWA build 產物）即可運行，不需額外 runtime 或 container。

@@ -1,3 +1,9 @@
+## Purpose
+
+跨 provider 收藏的雙 ID 儲存與 lazy resolve 機制。
+
+## Requirements
+
 ### Requirement: Dual-ID storage structure
 收藏/快捷 SHALL 儲存雙組 ID（tdx_route_id / tdx_stop_id 和 ebus_route_id / ebus_stop_id），取代原本的單一 route_id / stop_id。
 

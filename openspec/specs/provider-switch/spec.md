@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+CLI provider 模式切換，支援 auto、tdx、ebus 三種模式。
+
+## Requirements
 
 ### Requirement: Provider mode selection via CLI flag
 CLI SHALL accept `--provider <mode>` flag，支援 `auto`、`tdx`、`ebus` 三個值。未提供時使用 config/env/default 決定。

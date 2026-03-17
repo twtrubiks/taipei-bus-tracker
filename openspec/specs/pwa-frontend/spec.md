@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+React PWA 前端，提供路線搜尋、即時到站顯示、收藏、通知與深色模式等功能。
+
+## Requirements
 
 ### Requirement: 路線搜尋
 使用者 SHALL 能在搜尋框輸入路線名稱（如 "1"、"299"），系統即時顯示匹配的路線列表供選擇。

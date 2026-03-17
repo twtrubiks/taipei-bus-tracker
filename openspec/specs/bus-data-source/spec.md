@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+公車資料源抽象層，定義統一介面與 TDX/eBus provider 實作及 fallback 機制。
+
+## Requirements
 
 ### Requirement: BusDataSource 統一介面
 系統 SHALL 定義 BusDataSource interface，包含以下方法：SearchRoutes(city, keyword)、GetStops(city, routeId, direction)、GetETA(city, routeId, direction)。所有 provider MUST 實作此 interface。

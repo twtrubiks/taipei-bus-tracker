@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+CLI 互動式路線、方向、站點選擇流程。
+
+## Requirements
 
 ### Requirement: 互動式路線搜尋
 使用者啟動 CLI 後，系統 SHALL 提示輸入路線關鍵字，呼叫 SearchRoutes 並列出匹配的路線供選擇。

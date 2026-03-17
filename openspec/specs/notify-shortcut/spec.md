@@ -1,3 +1,9 @@
+## Purpose
+
+CLI 快捷設定的儲存、載入、列出與刪除功能。
+
+## Requirements
+
 ### Requirement: 快捷儲存
 互動式選站完成後，系統 SHALL 提示使用者輸入快捷名稱，將選站結果儲存至 `notify.yaml`。儲存時 SHALL 根據當前 provider 將 ID 存入對應的 tdx 或 ebus 欄位。
 

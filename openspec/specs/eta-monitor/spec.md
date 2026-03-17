@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+ETA 監控模式，持續 polling 到站時間並在跌破閾值時觸發通知。
+
+## Requirements
 
 ### Requirement: 持續 Polling ETA
 進入監控模式後，系統 SHALL 定期呼叫 GetETA 取得目標站點的即時到站資訊，並持續運行直到使用者按 Ctrl+C。

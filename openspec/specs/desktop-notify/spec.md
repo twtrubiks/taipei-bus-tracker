@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+桌面通知功能，透過 notify-send 或 kdialog 發送到站提醒。
+
+## Requirements
 
 ### Requirement: 桌面通知（notify-send / kdialog fallback）
 當 ETA 跌破閾值時，系統 SHALL 透過偵測到的通知工具發送桌面通知。
