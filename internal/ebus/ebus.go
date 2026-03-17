@@ -152,7 +152,7 @@ func (p *Provider) SearchRoutes(ctx context.Context, _ string, keyword string) (
 	if err != nil {
 		return nil, fmt.Errorf("ebus SearchRoutes: %w", err)
 	}
-	return parseSearchRoutes(string(body)), nil
+	return parseSearchRoutes(string(body))
 }
 
 // GetStops returns stops for a route by scraping the eBus route page.
@@ -178,7 +178,7 @@ func (p *Provider) GetStops(ctx context.Context, _ string, routeID string, direc
 		return nil, err
 	}
 
-	return parseStopsHTML(string(body), direction), nil
+	return parseStopsHTML(string(body), direction)
 }
 
 // GetETA returns estimated arrival times from eBus.

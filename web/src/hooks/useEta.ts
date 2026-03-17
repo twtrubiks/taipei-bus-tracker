@@ -33,9 +33,8 @@ export function useEta(routeId: string, direction: number) {
     timerRef.current = setInterval(doFetch, POLL_INTERVAL);
 
     const handleVisibility = () => {
-      if (document.visibilityState === "hidden") {
-        clearInterval(timerRef.current);
-      } else {
+      clearInterval(timerRef.current);
+      if (document.visibilityState === "visible") {
         doFetch();
         timerRef.current = setInterval(doFetch, POLL_INTERVAL);
       }

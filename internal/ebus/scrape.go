@@ -1,12 +1,16 @@
 package ebus
 
 import (
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/twtrubiks/taipei-bus-tracker/internal/model"
 )
+
+// Minimum HTML length to suspect a scraping failure rather than empty results.
+const minHTMLLen = 1024
 
 // Regex patterns for parsing eBus HTML responses.
 var (
@@ -22,7 +26,7 @@ var (
 )
 
 // parseSearchRoutes parses the HTML returned by POST /Query/QBusRoute.
-func parseSearchRoutes(html string) []model.Route {
+func parseSearchRoutes(html string) ([]model.Route, error) {
 	matches := searchRouteRe.FindAllStringSubmatch(html, -1)
 	routes := make([]model.Route, 0, len(matches))
 	for _, m := range matches {
@@ -39,7 +43,10 @@ func parseSearchRoutes(html string) []model.Route {
 			Source:    "ebus",
 		})
 	}
-	return routes
+	if len(routes) == 0 && len(html) > minHTMLLen {
+		return nil, fmt.Errorf("ebus scrape: searchRoutes matched 0 routes from %d bytes HTML, possible format change", len(html))
+	}
+	return routes, nil
 }
 
 // splitPlace splits "新莊 - 永春高中" into ("新莊", "永春高中").
@@ -55,7 +62,7 @@ func splitPlace(place string) (string, string) {
 
 // parseStopsHTML parses the full /Route/StopsOfRoute page HTML.
 // direction 0 = GoDirectionRoute, 1 = BackDirectionRoute.
-func parseStopsHTML(html string, direction int) []model.Stop {
+func parseStopsHTML(html string, direction int) ([]model.Stop, error) {
 	sectionID := "GoDirectionRoute"
 	if direction == 1 {
 		sectionID = "BackDirectionRoute"
@@ -64,7 +71,10 @@ func parseStopsHTML(html string, direction int) []model.Stop {
 	// Find the section for the requested direction.
 	idx := strings.Index(html, `id="`+sectionID+`"`)
 	if idx < 0 {
-		return nil
+		if len(html) > minHTMLLen {
+			return nil, fmt.Errorf("ebus scrape: section %s not found in %d bytes HTML, possible format change", sectionID, len(html))
+		}
+		return nil, nil
 	}
 	section := html[idx:]
 
@@ -91,5 +101,8 @@ func parseStopsHTML(html string, direction int) []model.Stop {
 			Source:   "ebus",
 		})
 	}
-	return stops
+	if len(stops) == 0 && len(section) > minHTMLLen {
+		return nil, fmt.Errorf("ebus scrape: parseStops matched 0 stops from %d bytes section, possible format change", len(section))
+	}
+	return stops, nil
 }

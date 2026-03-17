@@ -11,6 +11,8 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/sync/singleflight"
+
 	"github.com/twtrubiks/taipei-bus-tracker/internal/model"
 )
 
@@ -27,6 +29,7 @@ type Provider struct {
 	mu          sync.RWMutex
 	accessToken string
 	expiresAt   time.Time
+	sfGroup     singleflight.Group
 }
 
 func NewProvider(clientID, clientSecret string) *Provider {
@@ -89,7 +92,10 @@ func (p *Provider) getToken(ctx context.Context) (string, error) {
 		return token, nil
 	}
 
-	if err := p.refreshToken(ctx); err != nil {
+	_, err, _ := p.sfGroup.Do("refresh", func() (any, error) {
+		return nil, p.refreshToken(ctx)
+	})
+	if err != nil {
 		return "", err
 	}
 

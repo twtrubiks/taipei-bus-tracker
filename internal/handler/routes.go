@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"regexp"
 	"time"
 
 	"github.com/twtrubiks/taipei-bus-tracker/internal/cache"
@@ -9,6 +10,11 @@ import (
 )
 
 const defaultCity = "Taipei"
+
+var (
+	validKeyword = regexp.MustCompile(`^[\p{Han}a-zA-Z0-9 ]+$`)
+	validRouteID = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
+)
 
 // Handlers holds dependencies for HTTP handlers.
 type Handlers struct {
@@ -26,6 +32,10 @@ func (h *Handlers) SearchRoutes(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query().Get("q")
 	if q == "" {
 		writeError(w, http.StatusBadRequest, "missing query parameter: q")
+		return
+	}
+	if !validKeyword.MatchString(q) {
+		writeError(w, http.StatusBadRequest, "invalid keyword")
 		return
 	}
 
@@ -49,6 +59,10 @@ func (h *Handlers) GetStops(w http.ResponseWriter, r *http.Request) {
 	routeID := r.PathValue("routeId")
 	if routeID == "" {
 		writeError(w, http.StatusBadRequest, "missing routeId")
+		return
+	}
+	if !validRouteID.MatchString(routeID) {
+		writeError(w, http.StatusBadRequest, "invalid routeId")
 		return
 	}
 
@@ -82,6 +96,10 @@ func (h *Handlers) GetETA(w http.ResponseWriter, r *http.Request) {
 	routeID := r.PathValue("routeId")
 	if routeID == "" {
 		writeError(w, http.StatusBadRequest, "missing routeId")
+		return
+	}
+	if !validRouteID.MatchString(routeID) {
+		writeError(w, http.StatusBadRequest, "invalid routeId")
 		return
 	}
 

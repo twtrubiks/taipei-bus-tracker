@@ -36,7 +36,10 @@ const searchResultHTML = `
 `
 
 func TestParseSearchRoutes(t *testing.T) {
-	routes := parseSearchRoutes(searchResultHTML)
+	routes, err := parseSearchRoutes(searchResultHTML)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 	if len(routes) != 2 {
 		t.Fatalf("expected 2 routes, got %d", len(routes))
 	}
@@ -65,7 +68,10 @@ func TestParseSearchRoutes(t *testing.T) {
 }
 
 func TestParseSearchRoutes_Empty(t *testing.T) {
-	routes := parseSearchRoutes(`<ul class="auto-list-pool"></ul>`)
+	routes, err := parseSearchRoutes(`<ul class="auto-list-pool"></ul>`)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 	if len(routes) != 0 {
 		t.Errorf("expected 0 routes, got %d", len(routes))
 	}
@@ -80,7 +86,10 @@ func TestParseSearchRoutes_NoSeparator(t *testing.T) {
 </a>
 </li>
 </ul>`
-	routes := parseSearchRoutes(html)
+	routes, err := parseSearchRoutes(html)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 	if len(routes) != 1 {
 		t.Fatalf("expected 1 route, got %d", len(routes))
 	}
@@ -131,7 +140,10 @@ const stopsPageHTML = `<html><body>
 </body></html>`
 
 func TestParseStops_GoDirection(t *testing.T) {
-	stops := parseStopsHTML(stopsPageHTML, 0)
+	stops, err := parseStopsHTML(stopsPageHTML, 0)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 	if len(stops) != 2 {
 		t.Fatalf("expected 2 stops for direction 0, got %d", len(stops))
 	}
@@ -158,7 +170,10 @@ func TestParseStops_GoDirection(t *testing.T) {
 }
 
 func TestParseStops_BackDirection(t *testing.T) {
-	stops := parseStopsHTML(stopsPageHTML, 1)
+	stops, err := parseStopsHTML(stopsPageHTML, 1)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 	if len(stops) != 1 {
 		t.Fatalf("expected 1 stop for direction 1, got %d", len(stops))
 	}
@@ -172,7 +187,10 @@ func TestParseStops_BackDirection(t *testing.T) {
 }
 
 func TestParseStops_Empty(t *testing.T) {
-	stops := parseStopsHTML("<html></html>", 0)
+	stops, err := parseStopsHTML("<html></html>", 0)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 	if len(stops) != 0 {
 		t.Errorf("expected 0 stops, got %d", len(stops))
 	}
