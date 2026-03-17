@@ -7,6 +7,7 @@ export default function RouteSearch() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Route[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
   const navigate = useNavigate();
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -15,6 +16,7 @@ export default function RouteSearch() {
     setQuery(val);
     if (!val.trim()) {
       setResults([]);
+      setError(false);
     }
   };
 
@@ -25,9 +27,16 @@ export default function RouteSearch() {
     clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       setLoading(true);
+      setError(false);
       searchRoutes(trimmed)
-        .then((data) => setResults(data ?? []))
-        .catch(() => setResults([]))
+        .then((data) => {
+          setResults(data ?? []);
+          setError(false);
+        })
+        .catch(() => {
+          setResults([]);
+          setError(true);
+        })
         .finally(() => setLoading(false));
     }, 300);
 
@@ -47,7 +56,11 @@ export default function RouteSearch() {
 
       {loading && <p className="mt-2 text-sm text-gray-500">搜尋中...</p>}
 
-      {!loading && query.trim() && results.length === 0 && (
+      {!loading && error && (
+        <p className="mt-2 text-sm text-red-500">搜尋失敗，請檢查網路後重試</p>
+      )}
+
+      {!loading && !error && query.trim() && results.length === 0 && (
         <p className="mt-2 text-sm text-gray-500">找不到符合的路線</p>
       )}
 

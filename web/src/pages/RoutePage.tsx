@@ -14,6 +14,7 @@ export default function RoutePage() {
   const routeName = searchParams.get("name") ?? routeId ?? "";
   const [direction, setDirection] = useState(searchParams.get("dir") === "1" ? 1 : 0);
   const [stops, setStops] = useState<Stop[]>([]);
+  const [stopsError, setStopsError] = useState(false);
   const [loadedKey, setLoadedKey] = useState("");
 
   const stopsKey = `${routeId}-${direction}`;
@@ -36,10 +37,16 @@ export default function RoutePage() {
     let cancelled = false;
     getStops(routeId, direction)
       .then((data) => {
-        if (!cancelled) setStops(data);
+        if (!cancelled) {
+          setStops(data);
+          setStopsError(false);
+        }
       })
       .catch(() => {
-        if (!cancelled) setStops([]);
+        if (!cancelled) {
+          setStops([]);
+          setStopsError(true);
+        }
       })
       .finally(() => {
         if (!cancelled) setLoadedKey(`${routeId}-${direction}`);
@@ -107,6 +114,10 @@ export default function RoutePage() {
 
       {etaError && (
         <p className="mt-2 text-sm text-red-500">載入失敗，稍後重試</p>
+      )}
+
+      {stopsError && !loadingStops && (
+        <p className="mt-2 text-sm text-red-500">站點載入失敗，請檢查網路後重試</p>
       )}
 
       {loadingStops ? (

@@ -34,7 +34,7 @@ func (h *Handlers) SearchRoutes(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "missing query parameter: q")
 		return
 	}
-	if !validKeyword.MatchString(q) {
+	if len(q) > 50 || !validKeyword.MatchString(q) {
 		writeError(w, http.StatusBadRequest, "invalid keyword")
 		return
 	}

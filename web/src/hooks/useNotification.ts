@@ -36,7 +36,11 @@ function loadAlerts(): NotificationAlert[] {
 }
 
 function saveAlerts(alerts: NotificationAlert[]): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(alerts));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(alerts));
+  } catch {
+    // QuotaExceededError or restricted storage — silently ignore
+  }
 }
 
 function alertKey(

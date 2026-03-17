@@ -14,7 +14,11 @@ function loadFavorites(): Favorite[] {
 }
 
 function saveFavorites(favs: Favorite[]): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(favs));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(favs));
+  } catch {
+    // QuotaExceededError or restricted storage — silently ignore
+  }
 }
 
 function favKey(f: Pick<Favorite, "routeId" | "direction" | "stopId">): string {

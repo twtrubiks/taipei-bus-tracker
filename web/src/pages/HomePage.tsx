@@ -105,6 +105,12 @@ export default function HomePage() {
         搜尋路線
       </Link>
 
+      {favorites.length === 0 && (
+        <p className="mt-6 text-sm text-gray-500">
+          尚無收藏站點，搜尋路線後可收藏常用站點，即時到站資訊會顯示在這裡。
+        </p>
+      )}
+
       {favorites.length > 0 && (
         <section className="mt-6">
           <h2 className="mb-3 text-lg font-semibold">收藏站點</h2>
