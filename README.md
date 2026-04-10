@@ -1,5 +1,9 @@
 # Taipei Bus Tracker
 
+[![Go](https://img.shields.io/badge/Go-1.26+-00ADD8.svg)](https://go.dev/)
+[![React](https://img.shields.io/badge/React-19-61DAFB.svg)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6-blue.svg)](https://www.typescriptlang.org/)
+
 自架的台北公車即時到站查詢工具。Go 後端 + React PWA 前端，單一 binary 部署。
 
 > 本專案使用 [OpenSpec](https://github.com/Fission-AI/OpenSpec) 進行需求規劃與任務拆解，完整的 change 記錄可參考 [openspec/](openspec/)。
@@ -47,9 +51,9 @@ Terminal 監控到站時間，到站時發送桌面通知。
 
 ## 環境需求
 
-- Go 1.22+
-- Node.js 20+
-- npm 10+
+- Go 1.26+
+- Node.js 24+
+- npm 11+
 
 ## 快速開始
 
