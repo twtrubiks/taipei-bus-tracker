@@ -4,6 +4,7 @@ import { getStops } from "../api/client";
 import type { Stop } from "../api/types";
 import DirectionSelector from "../components/DirectionSelector";
 import StopList from "../components/StopList";
+import DataFreshness from "../components/DataFreshness";
 import { useEta } from "../hooks/useEta";
 import { useFavorites } from "../hooks/useFavorites";
 import { useNotificationContext } from "../hooks/NotificationContext";
@@ -58,6 +59,15 @@ export default function RoutePage() {
       cancelled = true;
     };
   }, [routeId, direction]);
+
+  // Stops loaded fine and the ETA poll succeeded, but no bus is reporting on this
+  // direction — a different situation from a failed request, and worth saying so.
+  const noSchedule =
+    !loadingStops &&
+    !stopsError &&
+    stops.length > 0 &&
+    etaFetchedAt > 0 &&
+    etaData?.stops.length === 0;
 
   if (!routeId) return null;
 
@@ -115,12 +125,16 @@ export default function RoutePage() {
         </p>
       )}
 
-      {etaError && (
-        <p className="mt-2 text-sm text-red-500">載入失敗，稍後重試</p>
-      )}
+      <DataFreshness fetchedAt={etaFetchedAt} failing={!!etaError} />
 
       {stopsError && !loadingStops && (
         <p className="mt-2 text-sm text-red-500">站點載入失敗，請檢查網路後重試</p>
+      )}
+
+      {noSchedule && (
+        <p className="mt-2 text-sm text-gray-500">
+          暫無班次資訊，此方向目前沒有回報到站時間
+        </p>
       )}
 
       {loadingStops ? (

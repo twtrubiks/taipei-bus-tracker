@@ -14,3 +14,8 @@ export function countdownEta(eta: number, fetchedAt: number, now: number): numbe
   const elapsedMs = Math.min(Math.max(now - fetchedAt, 0), STALE_AFTER_MS);
   return Math.max(0, eta - Math.floor(elapsedMs / 1000));
 }
+
+/** True once data has gone longer than STALE_AFTER_MS without a successful refresh. */
+export function isStale(fetchedAt: number, now: number): boolean {
+  return fetchedAt > 0 && now - fetchedAt >= STALE_AFTER_MS;
+}

@@ -8,12 +8,19 @@ const POLL_INTERVAL = 15_000;
 export interface FavoriteETA {
   favorite: Favorite;
   eta?: StopETA;
+  /** When this favorite's route last refreshed, 0 if it never has. */
+  fetchedAt: number;
 }
 
 export interface FavoritesEtaResult {
   items: FavoriteETA[];
-  /** Timestamp (ms) of the last poll that returned data, 0 before the first one. */
+  /**
+   * Timestamp (ms) of the oldest data currently on screen — the one that decides
+   * whether anything shown has gone stale. 0 before the first successful poll.
+   */
   fetchedAt: number;
+  /** Whether the most recent poll failed for at least one route. */
+  failing: boolean;
 }
 
 /**
@@ -30,7 +37,10 @@ export function useFavoritesEta(
   ) => void,
 ): FavoritesEtaResult {
   const [etaMap, setEtaMap] = useState<Map<string, StopETA>>(new Map());
-  const [fetchedAt, setFetchedAt] = useState(0);
+  // Per route+direction, so a route that stops refreshing does not get counted
+  // down from another route's fresh timestamp.
+  const [fetchedAtMap, setFetchedAtMap] = useState<Map<string, number>>(new Map());
+  const [failing, setFailing] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval>>(undefined);
   const onEtaFetchedRef = useRef(onEtaFetched);
   const resolveFavoriteRef = useRef(resolveFavorite);
@@ -110,10 +120,12 @@ export function useFavoritesEta(
       if (cancelled) return;
 
       const failedKeys: { routeId: string; direction: number }[] = [];
+      const refreshed: string[] = [];
 
       results.forEach((result, i) => {
         const rk = routeKeys[i];
         if (result.status === "fulfilled" && result.value.stops.length > 0) {
+          refreshed.push(`${rk.routeId}:${rk.direction}`);
           for (const stop of result.value.stops) {
             newMap.set(`${rk.routeId}:${rk.direction}:${stop.stopId}`, stop);
             // Secondary key by stopName for cross-provider fallback matching
@@ -125,16 +137,31 @@ export function useFavoritesEta(
         }
       });
 
-      // A poll that returned nothing at all leaves fetchedAt alone, so the
-      // countdown keeps measuring from the last data we actually have.
-      if (newMap.size > 0) setFetchedAt(Date.now());
+      setFailing(failedKeys.length > 0);
 
-      // Only update state if data actually changed to avoid unnecessary re-renders
+      if (refreshed.length > 0) {
+        const at = Date.now();
+        setFetchedAtMap((prev) => {
+          const next = new Map(prev);
+          for (const key of refreshed) next.set(key, at);
+          return next;
+        });
+      }
+
+      // Routes that failed this round keep their previous values — stale numbers
+      // carrying a freshness warning beat a row of dashes.
       setEtaMap((prev) => {
-        if (prev.size !== newMap.size) return newMap;
-        for (const [key, stop] of newMap) {
+        const merged = new Map<string, StopETA>();
+        for (const [key, stop] of prev) {
+          if (!refreshed.some((r) => key.startsWith(`${r}:`))) merged.set(key, stop);
+        }
+        for (const [key, stop] of newMap) merged.set(key, stop);
+
+        // Only swap in a new map if something actually changed, to avoid re-renders
+        if (prev.size !== merged.size) return merged;
+        for (const [key, stop] of merged) {
           const old = prev.get(key);
-          if (!old || old.eta !== stop.eta) return newMap;
+          if (!old || old.eta !== stop.eta) return merged;
         }
         return prev;
       });
@@ -171,7 +198,11 @@ export function useFavoritesEta(
     eta:
       etaMap.get(`${f.routeId}:${f.direction}:${f.stopId}`) ??
       etaMap.get(`${f.routeId}:${f.direction}:name:${f.stopName}`),
+    fetchedAt: fetchedAtMap.get(`${f.routeId}:${f.direction}`) ?? 0,
   }));
 
-  return { items, fetchedAt };
+  const loaded = items.map((i) => i.fetchedAt).filter((at) => at > 0);
+  const fetchedAt = loaded.length > 0 ? Math.min(...loaded) : 0;
+
+  return { items, fetchedAt, failing };
 }

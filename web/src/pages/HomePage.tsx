@@ -4,6 +4,7 @@ import { useFavorites } from "../hooks/useFavorites";
 import { useFavoritesEta } from "../hooks/useFavoritesEta";
 import { useNotificationContext } from "../hooks/NotificationContext";
 import { AlertBell, AlertMenu } from "../components/AlertButton";
+import DataFreshness from "../components/DataFreshness";
 import { searchRoutes, getStops } from "../api/client";
 import { statusColor } from "../utils/statusColor";
 import { etaStatus } from "../utils/etaStatus";
@@ -96,11 +97,11 @@ export default function HomePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const { items: favoritesEta, fetchedAt } = useFavoritesEta(
-    favorites,
-    handleEtaFetched,
-    resolveFavorite,
-  );
+  const {
+    items: favoritesEta,
+    fetchedAt,
+    failing,
+  } = useFavoritesEta(favorites, handleEtaFetched, resolveFavorite);
 
   return (
     <div className="mx-auto max-w-lg p-4 md:max-w-2xl">
@@ -122,10 +123,13 @@ export default function HomePage() {
       {favorites.length > 0 && (
         <section className="mt-6">
           <h2 className="mb-3 text-lg font-semibold">收藏站點</h2>
+          <DataFreshness fetchedAt={fetchedAt} failing={failing} />
           <ul className="grid grid-cols-1 gap-3 md:grid-cols-2" role="list">
-            {favoritesEta.map(({ favorite: f, eta }) => {
+            {favoritesEta.map(({ favorite: f, eta, fetchedAt: etaFetchedAt }) => {
               const favKey = `${f.routeId}:${f.direction}:${f.stopId}`;
-              const displayEta = eta ? countdownEta(eta.eta, fetchedAt, now) : undefined;
+              const displayEta = eta
+                ? countdownEta(eta.eta, etaFetchedAt, now)
+                : undefined;
               const alert = getAlert(f.routeId, f.direction, f.stopId);
               const showMenu = alertMenuKey === favKey;
 

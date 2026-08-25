@@ -1,5 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { renderHook, waitFor, act } from "@testing-library/react";
+import { getETA } from "../api/client";
 import { useFavoritesEta } from "./useFavoritesEta";
 import type { Favorite } from "../api/types";
 
@@ -45,6 +46,10 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 describe("useFavoritesEta", () => {
   it("calls onEtaFetched callback with route+direction+stops after fetch", async () => {
     const onEtaFetched = vi.fn();
@@ -80,5 +85,29 @@ describe("useFavoritesEta", () => {
     await waitFor(() => {
       expect(result.current.fetchedAt).toBeGreaterThanOrEqual(before);
     });
+  });
+
+  it("keeps the previous ETA and flags the failure when a poll fails", async () => {
+    // Fake timers must be in place before the hook registers its polling interval
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const { result } = renderHook(() => useFavoritesEta(favorites));
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(result.current.items[0].eta).toBeDefined();
+    expect(result.current.failing).toBe(false);
+    const fetchedAtBefore = result.current.items[0].fetchedAt;
+
+    vi.mocked(getETA).mockRejectedValueOnce(new Error("network error"));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(15_000);
+    });
+
+    expect(result.current.failing).toBe(true);
+    // Stale numbers with a freshness warning beat a row of dashes
+    expect(result.current.items[0].eta?.stopId).toBe("s1");
+    // ...and they must still be counted down from when they were actually fetched
+    expect(result.current.items[0].fetchedAt).toBe(fetchedAtBefore);
   });
 });
