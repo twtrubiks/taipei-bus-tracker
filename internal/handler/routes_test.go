@@ -98,11 +98,11 @@ func TestGetETA_Success(t *testing.T) {
 	if len(resp.Stops) != 2 {
 		t.Fatalf("expected 2 stops, got %d", len(resp.Stops))
 	}
-	if resp.Stops[0].Status != "約5分" {
-		t.Errorf("expected 約5分, got %s", resp.Stops[0].Status)
+	if resp.Stops[0].ETA != 300 {
+		t.Errorf("expected eta 300, got %d", resp.Stops[0].ETA)
 	}
-	if resp.Stops[1].Status != "未發車" {
-		t.Errorf("expected 未發車, got %s", resp.Stops[1].Status)
+	if resp.Stops[1].ETA != model.ETANotDeparted {
+		t.Errorf("expected eta %d, got %d", model.ETANotDeparted, resp.Stops[1].ETA)
 	}
 }
 
@@ -146,8 +146,8 @@ func TestGetETA_EBus_FillsStopInfo(t *testing.T) {
 	if resp.Stops[0].StopName != "建國中學" {
 		t.Errorf("expected stopName 建國中學, got %s", resp.Stops[0].StopName)
 	}
-	if resp.Stops[0].Status != "約5分" {
-		t.Errorf("expected 約5分, got %s", resp.Stops[0].Status)
+	if resp.Stops[0].ETA != 300 {
+		t.Errorf("expected eta 300, got %d", resp.Stops[0].ETA)
 	}
 	if resp.Stops[1].StopID != "S2" {
 		t.Errorf("expected stopId S2, got %s", resp.Stops[1].StopID)

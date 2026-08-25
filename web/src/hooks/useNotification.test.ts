@@ -9,7 +9,6 @@ const mockEta = (stopId: string, eta: number): StopETA => ({
   stopName: "台北車站",
   sequence: 1,
   eta,
-  status: eta > 0 ? `約${Math.ceil(eta / 60)}分` : "未發車",
   buses: [],
   source: "tdx",
 });

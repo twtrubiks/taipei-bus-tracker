@@ -41,7 +41,6 @@ function TestConsumer() {
               stopName: "台北車站",
               sequence: 1,
               eta: 120,
-              status: "約2分",
               buses: [],
               source: "tdx",
             },

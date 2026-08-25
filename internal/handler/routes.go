@@ -116,11 +116,6 @@ func (h *Handlers) GetETA(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Fill in status strings
-	for i := range etas {
-		etas[i].Status = model.ETAStatus(etas[i].ETA)
-	}
-
 	source := "tdx"
 	if len(etas) > 0 && etas[0].Source != "" {
 		source = etas[0].Source

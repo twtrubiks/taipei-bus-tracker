@@ -123,7 +123,7 @@ export function useFavoritesEta(
         if (prev.size !== newMap.size) return newMap;
         for (const [key, stop] of newMap) {
           const old = prev.get(key);
-          if (!old || old.eta !== stop.eta || old.status !== stop.status) return newMap;
+          if (!old || old.eta !== stop.eta) return newMap;
         }
         return prev;
       });

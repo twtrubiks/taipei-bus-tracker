@@ -34,7 +34,6 @@ type StopETA struct {
 	StopName string `json:"stopName"`
 	Sequence int    `json:"sequence"`
 	ETA      int    `json:"eta"`
-	Status   string `json:"status"`
 	Buses    []Bus  `json:"buses"`
 	Source   string `json:"source"`
 }

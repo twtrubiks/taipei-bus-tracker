@@ -17,7 +17,6 @@ const mockResponse: ETAResponse = {
       stopName: "台北車站",
       sequence: 1,
       eta: 300,
-      status: "約5分",
       buses: [],
       source: "tdx",
     },

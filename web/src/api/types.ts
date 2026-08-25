@@ -22,7 +22,6 @@ export interface StopETA {
   stopName: string;
   sequence: number;
   eta: number;
-  status: string;
   buses: Bus[];
   source: string;
 }

@@ -8,13 +8,12 @@ const stops: Stop[] = [
   { stopId: "s2", stopName: "中山站", sequence: 2 },
 ];
 
-function makeEta(sequence: number, eta: number, status: string): StopETA {
+function makeEta(sequence: number, eta: number): StopETA {
   return {
     stopId: `s${sequence}`,
     stopName: `stop-${sequence}`,
     sequence,
     eta,
-    status,
     buses: [],
     source: "tdx",
   };
@@ -22,50 +21,43 @@ function makeEta(sequence: number, eta: number, status: string): StopETA {
 
 describe("StopList ETA status rendering", () => {
   it("renders '約5分' for eta=300", () => {
-    const etas = [makeEta(1, 300, "約5分")];
+    const etas = [makeEta(1, 300)];
     render(<StopList stops={stops} etas={etas} />);
     expect(screen.getByText("約5分")).toBeInTheDocument();
   });
 
   it("renders '進站中' for eta=60", () => {
-    const etas = [makeEta(1, 60, "進站中")];
+    const etas = [makeEta(1, 60)];
     render(<StopList stops={stops} etas={etas} />);
     expect(screen.getByText("進站中")).toBeInTheDocument();
   });
 
   it("renders '將到站' for eta=120", () => {
-    const etas = [makeEta(1, 120, "進站中")];
+    const etas = [makeEta(1, 120)];
     render(<StopList stops={stops} etas={etas} />);
     expect(screen.getByText("將到站")).toBeInTheDocument();
   });
 
-  it("derives status text from eta, ignoring the value passed in", () => {
-    const etas = [makeEta(1, 300, "進站中")];
-    render(<StopList stops={stops} etas={etas} />);
-    expect(screen.getByText("約5分")).toBeInTheDocument();
-    expect(screen.queryByText("進站中")).not.toBeInTheDocument();
-  });
-
   it("renders '未發車' for eta=-1", () => {
-    const etas = [makeEta(1, -1, "未發車")];
+    const etas = [makeEta(1, -1)];
     render(<StopList stops={stops} etas={etas} />);
     expect(screen.getByText("未發車")).toBeInTheDocument();
   });
 
   it("renders '末班車已駛離' for eta=-2", () => {
-    const etas = [makeEta(1, -2, "末班車已駛離")];
+    const etas = [makeEta(1, -2)];
     render(<StopList stops={stops} etas={etas} />);
     expect(screen.getByText("末班車已駛離")).toBeInTheDocument();
   });
 
   it("renders '交管不停靠' for eta=-3", () => {
-    const etas = [makeEta(1, -3, "交管不停靠")];
+    const etas = [makeEta(1, -3)];
     render(<StopList stops={stops} etas={etas} />);
     expect(screen.getByText("交管不停靠")).toBeInTheDocument();
   });
 
   it("renders '未營運' for eta=-4", () => {
-    const etas = [makeEta(1, -4, "未營運")];
+    const etas = [makeEta(1, -4)];
     render(<StopList stops={stops} etas={etas} />);
     expect(screen.getByText("未營運")).toBeInTheDocument();
   });
@@ -73,7 +65,7 @@ describe("StopList ETA status rendering", () => {
   it("shows plate number when bus is present", () => {
     const etas: StopETA[] = [
       {
-        ...makeEta(1, 60, "進站中"),
+        ...makeEta(1, 60),
         buses: [{ plateNumb: "ABC-1234" }],
       },
     ];
@@ -89,7 +81,7 @@ describe("StopList ETA status rendering", () => {
 
   it("matches ETA by stopId when sequence is 0 (TDX mode)", () => {
     const etas: StopETA[] = [
-      { stopId: "s2", stopName: "中山站", sequence: 0, eta: 120, status: "進站中", buses: [], source: "tdx" },
+      { stopId: "s2", stopName: "中山站", sequence: 0, eta: 120, buses: [], source: "tdx" },
     ];
     render(<StopList stops={stops} etas={etas} />);
     // s2 = 中山站 should show 將到站, 台北車站 should show —
