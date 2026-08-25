@@ -33,6 +33,19 @@ describe("StopList ETA status rendering", () => {
     expect(screen.getByText("進站中")).toBeInTheDocument();
   });
 
+  it("renders '將到站' for eta=120", () => {
+    const etas = [makeEta(1, 120, "進站中")];
+    render(<StopList stops={stops} etas={etas} />);
+    expect(screen.getByText("將到站")).toBeInTheDocument();
+  });
+
+  it("derives status text from eta, ignoring the value passed in", () => {
+    const etas = [makeEta(1, 300, "進站中")];
+    render(<StopList stops={stops} etas={etas} />);
+    expect(screen.getByText("約5分")).toBeInTheDocument();
+    expect(screen.queryByText("進站中")).not.toBeInTheDocument();
+  });
+
   it("renders '未發車' for eta=-1", () => {
     const etas = [makeEta(1, -1, "未發車")];
     render(<StopList stops={stops} etas={etas} />);
@@ -79,8 +92,8 @@ describe("StopList ETA status rendering", () => {
       { stopId: "s2", stopName: "中山站", sequence: 0, eta: 120, status: "進站中", buses: [], source: "tdx" },
     ];
     render(<StopList stops={stops} etas={etas} />);
-    // s2 = 中山站 should show 進站中, 台北車站 should show —
-    expect(screen.getByText("進站中")).toBeInTheDocument();
+    // s2 = 中山站 should show 將到站, 台北車站 should show —
+    expect(screen.getByText("將到站")).toBeInTheDocument();
     expect(screen.getAllByText("—")).toHaveLength(1);
   });
 

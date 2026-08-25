@@ -6,6 +6,7 @@ import { useNotificationContext } from "../hooks/NotificationContext";
 import { AlertBell, AlertMenu } from "../components/AlertButton";
 import { searchRoutes, getStops } from "../api/client";
 import { statusColor } from "../utils/statusColor";
+import { etaStatus } from "../utils/etaStatus";
 import { normalizeName } from "../utils/normalize";
 import type { StopETA } from "../api/types";
 
@@ -141,7 +142,7 @@ export default function HomePage() {
                     <span
                       className={`text-sm ${statusColor(eta?.eta ?? -999)}`}
                     >
-                      {eta?.status ?? "—"}
+                      {eta ? etaStatus(eta.eta) : "—"}
                     </span>
                     {eta?.buses && eta.buses.length > 0 && (
                       <span className="text-xs text-gray-400">

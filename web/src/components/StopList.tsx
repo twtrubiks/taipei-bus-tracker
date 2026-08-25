@@ -3,6 +3,7 @@ import type { Stop, StopETA } from "../api/types";
 import type { NotificationAlert } from "../hooks/useNotification";
 import { AlertBell, AlertMenu } from "./AlertButton";
 import { statusColor } from "../utils/statusColor";
+import { etaStatus } from "../utils/etaStatus";
 
 interface Props {
   stops: Stop[];
@@ -62,7 +63,7 @@ export default function StopList({
               <span className="min-w-0 flex-1 truncate" title={stop.stopName}>{stop.stopName}</span>
               <div className="shrink-0 text-right">
                 <span className={`text-sm font-medium ${statusColor(eta?.eta ?? -999)}`}>
-                  {eta?.status ?? "—"}
+                  {eta ? etaStatus(eta.eta) : "—"}
                 </span>
                 {eta?.buses && eta.buses.length > 0 && (
                   <p className="text-xs text-gray-400">
