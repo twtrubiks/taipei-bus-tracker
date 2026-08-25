@@ -7,6 +7,8 @@ import { AlertBell, AlertMenu } from "../components/AlertButton";
 import { searchRoutes, getStops } from "../api/client";
 import { statusColor } from "../utils/statusColor";
 import { etaStatus } from "../utils/etaStatus";
+import { countdownEta } from "../utils/countdown";
+import { useTick } from "../hooks/useTick";
 import { normalizeName } from "../utils/normalize";
 import type { StopETA } from "../api/types";
 
@@ -14,6 +16,7 @@ export default function HomePage() {
   const { favorites, removeFavorite, updateFavoriteIds, resolveFavorite } = useFavorites();
   const { checkAlerts, getAlert, addAlert, removeAlert } = useNotificationContext();
   const [alertMenuKey, setAlertMenuKey] = useState<string | null>(null);
+  const now = useTick();
 
   const favoritesRef = useRef(favorites);
   useEffect(() => {
@@ -93,7 +96,11 @@ export default function HomePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const favoritesEta = useFavoritesEta(favorites, handleEtaFetched, resolveFavorite);
+  const { items: favoritesEta, fetchedAt } = useFavoritesEta(
+    favorites,
+    handleEtaFetched,
+    resolveFavorite,
+  );
 
   return (
     <div className="mx-auto max-w-lg p-4 md:max-w-2xl">
@@ -118,6 +125,7 @@ export default function HomePage() {
           <ul className="grid grid-cols-1 gap-3 md:grid-cols-2" role="list">
             {favoritesEta.map(({ favorite: f, eta }) => {
               const favKey = `${f.routeId}:${f.direction}:${f.stopId}`;
+              const displayEta = eta ? countdownEta(eta.eta, fetchedAt, now) : undefined;
               const alert = getAlert(f.routeId, f.direction, f.stopId);
               const showMenu = alertMenuKey === favKey;
 
@@ -140,9 +148,9 @@ export default function HomePage() {
                       <span>{f.stopName}</span>
                     </Link>
                     <span
-                      className={`text-sm ${statusColor(eta?.eta ?? -999)}`}
+                      className={`text-sm ${statusColor(displayEta ?? -999)}`}
                     >
-                      {eta ? etaStatus(eta.eta) : "—"}
+                      {displayEta === undefined ? "—" : etaStatus(displayEta)}
                     </span>
                     {eta?.buses && eta.buses.length > 0 && (
                       <span className="text-xs text-gray-400">

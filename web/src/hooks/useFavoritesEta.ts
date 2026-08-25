@@ -10,6 +10,12 @@ export interface FavoriteETA {
   eta?: StopETA;
 }
 
+export interface FavoritesEtaResult {
+  items: FavoriteETA[];
+  /** Timestamp (ms) of the last poll that returned data, 0 before the first one. */
+  fetchedAt: number;
+}
+
 /**
  * Fetches ETA data for a list of favorites by batching requests per route+direction.
  * Optional onEtaFetched callback is invoked per route+direction with fresh ETA data.
@@ -22,8 +28,9 @@ export function useFavoritesEta(
     oldRouteId: string, direction: number, oldStopId: string,
     source: string, newRouteId: string, newStopId: string,
   ) => void,
-): FavoriteETA[] {
+): FavoritesEtaResult {
   const [etaMap, setEtaMap] = useState<Map<string, StopETA>>(new Map());
+  const [fetchedAt, setFetchedAt] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval>>(undefined);
   const onEtaFetchedRef = useRef(onEtaFetched);
   const resolveFavoriteRef = useRef(resolveFavorite);
@@ -118,6 +125,10 @@ export function useFavoritesEta(
         }
       });
 
+      // A poll that returned nothing at all leaves fetchedAt alone, so the
+      // countdown keeps measuring from the last data we actually have.
+      if (newMap.size > 0) setFetchedAt(Date.now());
+
       // Only update state if data actually changed to avoid unnecessary re-renders
       setEtaMap((prev) => {
         if (prev.size !== newMap.size) return newMap;
@@ -155,10 +166,12 @@ export function useFavoritesEta(
     };
   }, [routeKeys]);
 
-  return favorites.map((f) => ({
+  const items = favorites.map((f) => ({
     favorite: f,
     eta:
       etaMap.get(`${f.routeId}:${f.direction}:${f.stopId}`) ??
       etaMap.get(`${f.routeId}:${f.direction}:name:${f.stopName}`),
   }));
+
+  return { items, fetchedAt };
 }

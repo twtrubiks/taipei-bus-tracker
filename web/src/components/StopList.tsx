@@ -4,10 +4,14 @@ import type { NotificationAlert } from "../hooks/useNotification";
 import { AlertBell, AlertMenu } from "./AlertButton";
 import { statusColor } from "../utils/statusColor";
 import { etaStatus } from "../utils/etaStatus";
+import { countdownEta } from "../utils/countdown";
+import { useTick } from "../hooks/useTick";
 
 interface Props {
   stops: Stop[];
   etas: StopETA[];
+  /** Timestamp (ms) the etas were fetched; drives the between-poll countdown. */
+  fetchedAt?: number;
   routeId?: string;
   direction?: number;
   isFavorite?: (routeId: string, direction: number, stopId: string) => boolean;
@@ -20,6 +24,7 @@ interface Props {
 export default function StopList({
   stops,
   etas,
+  fetchedAt = 0,
   routeId,
   direction,
   isFavorite,
@@ -38,6 +43,7 @@ export default function StopList({
     [etas],
   );
   const [alertMenuStop, setAlertMenuStop] = useState<string | null>(null);
+  const now = useTick();
 
   if (!stops || stops.length === 0) {
     return <p className="mt-4 text-gray-500">無站點資料</p>;
@@ -47,6 +53,7 @@ export default function StopList({
     <ul className="mt-4 divide-y" role="list">
       {stops.map((stop) => {
         const eta = etaByStopId.get(stop.stopId) ?? etaBySeq.get(stop.sequence);
+        const displayEta = eta ? countdownEta(eta.eta, fetchedAt, now) : undefined;
         const fav =
           routeId !== undefined &&
           direction !== undefined &&
@@ -62,8 +69,8 @@ export default function StopList({
               </span>
               <span className="min-w-0 flex-1 truncate" title={stop.stopName}>{stop.stopName}</span>
               <div className="shrink-0 text-right">
-                <span className={`text-sm font-medium ${statusColor(eta?.eta ?? -999)}`}>
-                  {eta ? etaStatus(eta.eta) : "—"}
+                <span className={`text-sm font-medium ${statusColor(displayEta ?? -999)}`}>
+                  {displayEta === undefined ? "—" : etaStatus(displayEta)}
                 </span>
                 {eta?.buses && eta.buses.length > 0 && (
                   <p className="text-xs text-gray-400">

@@ -4,8 +4,16 @@ import type { ETAResponse } from "../api/types";
 
 const POLL_INTERVAL = 15_000;
 
-export function useEta(routeId: string, direction: number) {
+export interface EtaResult {
+  data: ETAResponse | null;
+  /** Timestamp (ms) of the last successful fetch, 0 before the first one. */
+  fetchedAt: number;
+  error: Error | null;
+}
+
+export function useEta(routeId: string, direction: number): EtaResult {
   const [data, setData] = useState<ETAResponse | null>(null);
+  const [fetchedAt, setFetchedAt] = useState(0);
   const [error, setError] = useState<Error | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval>>(undefined);
 
@@ -18,6 +26,7 @@ export function useEta(routeId: string, direction: number) {
         .then((res) => {
           if (!cancelled) {
             setData(res);
+            setFetchedAt(Date.now());
             setError(null);
           }
         })
@@ -49,5 +58,5 @@ export function useEta(routeId: string, direction: number) {
     };
   }, [routeId, direction]);
 
-  return { data, error };
+  return { data, fetchedAt, error };
 }

@@ -20,7 +20,10 @@ export default function RoutePage() {
   const stopsKey = `${routeId}-${direction}`;
   const loadingStops = stopsKey !== loadedKey;
 
-  const { data: etaData, error: etaError } = useEta(routeId ?? "", direction);
+  const { data: etaData, fetchedAt: etaFetchedAt, error: etaError } = useEta(
+    routeId ?? "",
+    direction,
+  );
   const { addFavorite, removeFavorite, isFavorite } = useFavorites();
   const { addAlert, removeAlert, getAlert, checkAlerts, permissionDenied } =
     useNotificationContext();
@@ -126,6 +129,7 @@ export default function RoutePage() {
         <StopList
           stops={stops}
           etas={etaData?.stops ?? []}
+          fetchedAt={etaFetchedAt}
           routeId={routeId}
           direction={direction}
           isFavorite={isFavorite}

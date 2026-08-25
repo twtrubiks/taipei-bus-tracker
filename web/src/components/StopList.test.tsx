@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, vi, afterEach } from "vitest";
+import { render, screen, act } from "@testing-library/react";
 import StopList from "./StopList";
 import type { Stop, StopETA } from "../api/types";
 
@@ -92,5 +92,57 @@ describe("StopList ETA status rendering", () => {
   it("renders empty state when stops is null", () => {
     render(<StopList stops={null as unknown as Stop[]} etas={[]} />);
     expect(screen.getByText("無站點資料")).toBeInTheDocument();
+  });
+});
+
+describe("StopList countdown", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("counts down between polls and crosses into the next tier", () => {
+    vi.useFakeTimers();
+    const fetchedAt = Date.now();
+
+    render(<StopList stops={stops} etas={[makeEta(1, 100)]} fetchedAt={fetchedAt} />);
+    expect(screen.getByText("將到站")).toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(15_000);
+    });
+    expect(screen.getByText("進站中")).toBeInTheDocument();
+  });
+
+  it("freezes the countdown once the data goes stale", () => {
+    vi.useFakeTimers();
+    const fetchedAt = Date.now();
+
+    render(<StopList stops={stops} etas={[makeEta(1, 300)]} fetchedAt={fetchedAt} />);
+    expect(screen.getByText("約5分")).toBeInTheDocument();
+
+    // 60s elapsed = the staleness cap: 300 - 60 = 240s
+    act(() => {
+      vi.advanceTimersByTime(60_000);
+    });
+    expect(screen.getByText("約4分")).toBeInTheDocument();
+
+    // Beyond the cap the value must not keep dropping
+    act(() => {
+      vi.advanceTimersByTime(120_000);
+    });
+    expect(screen.getByText("約4分")).toBeInTheDocument();
+  });
+
+  it("does not count down status codes", () => {
+    vi.useFakeTimers();
+    const fetchedAt = Date.now();
+
+    render(<StopList stops={stops} etas={[makeEta(1, -1)]} fetchedAt={fetchedAt} />);
+    expect(screen.getByText("未發車")).toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(30_000);
+    });
+    expect(screen.getByText("未發車")).toBeInTheDocument();
   });
 });

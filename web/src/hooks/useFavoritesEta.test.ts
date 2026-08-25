@@ -65,9 +65,20 @@ describe("useFavoritesEta", () => {
     const { result } = renderHook(() => useFavoritesEta(favorites));
 
     await waitFor(() => {
-      expect(result.current[0].eta).toBeDefined();
+      expect(result.current.items[0].eta).toBeDefined();
     });
 
-    expect(result.current[0].eta?.stopId).toBe("s1");
+    expect(result.current.items[0].eta?.stopId).toBe("s1");
+  });
+
+  it("stamps fetchedAt once a poll returns data", async () => {
+    const before = Date.now();
+    const { result } = renderHook(() => useFavoritesEta(favorites));
+
+    expect(result.current.fetchedAt).toBe(0);
+
+    await waitFor(() => {
+      expect(result.current.fetchedAt).toBeGreaterThanOrEqual(before);
+    });
   });
 });
