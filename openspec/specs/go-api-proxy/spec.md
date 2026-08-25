@@ -23,15 +23,19 @@ Go 後端 API，提供路線搜尋、站序查詢、即時到站時間等 RESTfu
 - **THEN** 系統回傳該路線去程的所有站點 JSON array，每筆包含 stopId、stopName、sequence，按站序排列，HTTP 200
 
 ### Requirement: API 取得即時到站時間
-系統 SHALL 提供 `GET /api/routes/{routeId}/eta?gb={direction}` endpoint，回傳指定路線某方向所有站的即時到站預估時間。
+系統 SHALL 提供 `GET /api/routes/{routeId}/eta?gb={direction}` endpoint，回傳指定路線某方向所有站的即時到站預估時間。回應中的到站資訊 SHALL 只包含秒數（`eta`），不包含人可讀的狀態文字——狀態文字由消費端（Web 前端、CLI）依秒數自行計算。
 
 #### Scenario: 取得到站時間成功
 - **WHEN** client 發送 `GET /api/routes/0100000100/eta?gb=0`
-- **THEN** 系統回傳 JSON，包含 route、direction、source（"tdx" 或 "ebus"）、updatedAt、stops array。每個 stop 包含 stopName、sequence、eta（秒）、status（人可讀字串）、buses array
+- **THEN** 系統回傳 JSON，包含 route、direction、source（"tdx" 或 "ebus"）、updatedAt、stops array。每個 stop 包含 stopId、stopName、sequence、eta（秒）、buses array
 
-#### Scenario: 到站時間各狀態對應
-- **WHEN** API 回傳 eta 值
-- **THEN** status 欄位 SHALL 對應：eta > 0 → "約 X 分"、eta ≤ 180 且 > 0 → "進站中"、eta = -1 → "未發車"、eta = -2 → "末班車已駛離"、eta = -3 → "交管不停靠"、eta = -4 → "未營運"
+#### Scenario: 回應不含 status 欄位
+- **WHEN** client 取得任一筆 ETA 回應
+- **THEN** stops 中的每個物件 SHALL NOT 包含 `status` 欄位
+
+#### Scenario: 到站秒數的特殊值
+- **WHEN** 上游回報非即時到站的狀態
+- **THEN** `eta` SHALL 以負數表示：-1 未發車、-2 末班車已駛離、-3 交管不停靠、-4 未營運。正數與 0 一律代表實際到站秒數
 
 ### Requirement: API 回應格式統一
 所有 API endpoint SHALL 回傳統一的 JSON 格式。錯誤時 SHALL 回傳 `{"error": "message"}` 搭配適當的 HTTP status code。
