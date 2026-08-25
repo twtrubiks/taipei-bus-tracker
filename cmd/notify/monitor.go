@@ -74,11 +74,16 @@ func findStopETA(etas []model.StopETA, stop model.Stop) int {
 	return model.ETANotDeparted
 }
 
+// etaMinutes converts ETA seconds to minutes, rounding up so we never promise
+// a bus earlier than it can arrive.
+func etaMinutes(etaSeconds int) int {
+	return (etaSeconds + 59) / 60
+}
+
 // formatETA returns a human-readable string for the given ETA value.
+// Tiers match model.ETAStatus and the web frontend; only the wording differs.
 func formatETA(etaSeconds int) string {
 	switch etaSeconds {
-	case 0:
-		return "進站中"
 	case model.ETANotDeparted:
 		return "未發車"
 	case model.ETALastBusLeft:
@@ -87,11 +92,16 @@ func formatETA(etaSeconds int) string {
 		return "交管不停靠"
 	case model.ETANotOperating:
 		return "未營運"
+	}
+	switch {
+	case etaSeconds < 0:
+		return "未知狀態"
+	case etaSeconds <= model.ArrivedMaxSec:
+		return "進站中"
+	case etaSeconds < model.ArrivingMaxSec:
+		return "將到站"
 	default:
-		if etaSeconds < 0 {
-			return "未知狀態"
-		}
-		return fmt.Sprintf("ETA %d 分", etaSeconds/60)
+		return fmt.Sprintf("ETA %d 分", etaMinutes(etaSeconds))
 	}
 }
 
@@ -186,8 +196,7 @@ func runMonitor(ctx context.Context, svc *handler.FallbackService, routeID strin
 			logETA(etaSec, shouldNotify)
 
 			if shouldNotify && notifyCmd != "" {
-				etaMin := etaSec / 60
-				if err := sendNotification(notifyCmd, routeName, stop.Name, etaMin); err != nil {
+				if err := sendNotification(notifyCmd, routeName, stop.Name, etaMinutes(etaSec)); err != nil {
 					log.Printf("通知發送失敗: %v", err)
 				}
 			}

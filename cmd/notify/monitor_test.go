@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -138,14 +139,21 @@ func TestFormatETA(t *testing.T) {
 	}{
 		{480, "ETA 8 分"},
 		{300, "ETA 5 分"},
+		{290, "ETA 5 分"}, // rounds up — never promise a bus earlier than it can arrive
 		{0, "進站中"},
+		{60, "進站中"},
+		{model.ArrivedMaxSec, "進站中"},
+		{model.ArrivedMaxSec + 1, "將到站"},
+		{179, "將到站"},
+		{model.ArrivingMaxSec, "ETA 3 分"},
 		{-1, "未發車"},
 		{-2, "末班駛離"},
 		{-3, "交管不停靠"},
 		{-4, "未營運"},
+		{-99, "未知狀態"},
 	}
 	for _, tt := range tests {
-		t.Run(tt.want, func(t *testing.T) {
+		t.Run(fmt.Sprintf("%d", tt.eta), func(t *testing.T) {
 			got := formatETA(tt.eta)
 			if got != tt.want {
 				t.Errorf("formatETA(%d) = %q, want %q", tt.eta, got, tt.want)

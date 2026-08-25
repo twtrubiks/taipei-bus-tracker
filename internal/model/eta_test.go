@@ -7,17 +7,20 @@ func TestETAStatus(t *testing.T) {
 		eta      int
 		expected string
 	}{
-		{300, "約5分"},
-		{60, "進站中"},
-		{180, "進站中"},
 		{0, "進站中"},
-		{-1, "未發車"},
-		{-2, "末班車已駛離"},
-		{-3, "交管不停靠"},
-		{-4, "未營運"},
+		{60, "進站中"},
+		{ArrivedMaxSec, "進站中"},
+		{ArrivedMaxSec + 1, "將到站"},
+		{179, "將到站"},
+		{ArrivingMaxSec, "約3分"},
+		{181, "約4分"}, // rounds up
+		{300, "約5分"},
 		{600, "約10分"},
-		{61, "進站中"},
-		{181, "約4分"}, // 181 sec -> rounds up to 4 min
+		{ETANotDeparted, "未發車"},
+		{ETALastBusLeft, "末班車已駛離"},
+		{ETANoStop, "交管不停靠"},
+		{ETANotOperating, "未營運"},
+		{-99, "未知"},
 	}
 
 	for _, tt := range tests {
