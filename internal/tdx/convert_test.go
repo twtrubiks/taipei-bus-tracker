@@ -145,6 +145,15 @@ func TestConvertETAs(t *testing.T) {
 	if len(etas[1].Buses) != 0 {
 		t.Errorf("expected 0 buses, got %d", len(etas[1].Buses))
 	}
+
+	// TDX's arrival endpoint has no departed/at-stop distinction, so every stop
+	// reports an empty DepartedBuses. The UI relies on this to skip the
+	// between-stops markers for TDX-sourced routes.
+	for i, e := range etas {
+		if len(e.DepartedBuses) != 0 {
+			t.Errorf("etas[%d].DepartedBuses = %v, want empty", i, e.DepartedBuses)
+		}
+	}
 }
 
 func TestConvertETAs_NoEstimateTime(t *testing.T) {

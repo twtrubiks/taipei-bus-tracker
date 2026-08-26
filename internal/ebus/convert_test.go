@@ -1,7 +1,10 @@
 package ebus
 
 import (
+	"slices"
 	"testing"
+
+	"github.com/twtrubiks/taipei-bus-tracker/internal/model"
 )
 
 func TestConvertETAs(t *testing.T) {
@@ -58,5 +61,89 @@ func TestConvertETAs_Empty(t *testing.T) {
 	etas := convertETAs(nil)
 	if len(etas) != 0 {
 		t.Errorf("expected 0 etas, got %d", len(etas))
+	}
+}
+
+// plateList flattens buses to plate numbers for comparison.
+func plateList(buses []model.Bus) []string {
+	out := make([]string, 0, len(buses))
+	for _, b := range buses {
+		out = append(out, b.PlateNumb)
+	}
+	return out
+}
+
+// bo (buses that left a stop) must survive conversion — dropping it was the
+// cause of plate numbers vanishing while a bus was between two stops.
+func TestConvertETAs_DepartedBuses(t *testing.T) {
+	stops := []EBusStopDynRaw{
+		// only bi: bus is standing at the stop
+		{SN: 0, ETA: 0, BI: []EBusBus{{BN: "EAL-1293"}}, BO: nil},
+		// only bo: bus already left, en route to the next stop
+		{SN: 1, ETA: 3, BI: nil, BO: []EBusBus{{BN: "KKB-1789"}}},
+		// both: one standing, two already gone
+		{SN: 2, ETA: 1, BI: []EBusBus{{BN: "EAL-5812"}}, BO: []EBusBus{{BN: "KKA-0161"}, {BN: "KKB-1785"}}},
+		// neither
+		{SN: 3, ETA: 7, BI: nil, BO: nil},
+	}
+
+	etas := convertETAs(stops)
+
+	cases := []struct {
+		name     string
+		idx      int
+		buses    []string
+		departed []string
+	}{
+		{"bi only", 0, []string{"EAL-1293"}, nil},
+		{"bo only", 1, nil, []string{"KKB-1789"}},
+		{"bi and bo", 2, []string{"EAL-5812"}, []string{"KKA-0161", "KKB-1785"}},
+		{"neither", 3, nil, nil},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			// slices.Equal treats nil and empty as equal, which is what we want
+			// here: "no buses" may arrive as either.
+			if got := plateList(etas[c.idx].Buses); !slices.Equal(got, c.buses) {
+				t.Errorf("Buses = %v, want %v", got, c.buses)
+			}
+			if got := plateList(etas[c.idx].DepartedBuses); !slices.Equal(got, c.departed) {
+				t.Errorf("DepartedBuses = %v, want %v", got, c.departed)
+			}
+		})
+	}
+}
+
+// A departed bus stays attached to the stop it left, not the stop it is heading to.
+func TestConvertETAs_DepartedBusStaysOnSourceStop(t *testing.T) {
+	stops := []EBusStopDynRaw{
+		{SN: 12, ETA: 3, BI: nil, BO: []EBusBus{{BN: "KKB-1789"}}},
+		{SN: 13, ETA: 1, BI: nil, BO: nil},
+	}
+	etas := convertETAs(stops)
+
+	if len(etas[0].DepartedBuses) != 1 || etas[0].DepartedBuses[0].PlateNumb != "KKB-1789" {
+		t.Errorf("stop sequence %d should carry the departed bus, got %v", etas[0].Sequence, etas[0].DepartedBuses)
+	}
+	if len(etas[1].Buses) != 0 || len(etas[1].DepartedBuses) != 0 {
+		t.Errorf("next stop must not receive the departed bus, got buses=%v departed=%v",
+			etas[1].Buses, etas[1].DepartedBuses)
+	}
+}
+
+// Upstream sometimes includes entries without a plate number; they carry no
+// information and must not become blank labels in the UI.
+func TestConvertETAs_SkipsEmptyPlates(t *testing.T) {
+	stops := []EBusStopDynRaw{
+		{SN: 0, ETA: 2, BI: []EBusBus{{BN: ""}}, BO: []EBusBus{{BN: ""}, {BN: "171-U7"}}},
+	}
+	etas := convertETAs(stops)
+
+	if len(etas[0].Buses) != 0 {
+		t.Errorf("expected empty plate to be skipped, got %v", etas[0].Buses)
+	}
+	if got := plateList(etas[0].DepartedBuses); len(got) != 1 || got[0] != "171-U7" {
+		t.Errorf("DepartedBuses = %v, want [171-U7]", got)
 	}
 }

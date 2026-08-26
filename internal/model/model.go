@@ -4,10 +4,10 @@ import "context"
 
 // ETA special values (negative = non-arrival status)
 const (
-	ETANotDeparted   = -1 // 未發車
-	ETALastBusLeft   = -2 // 末班車已駛離
-	ETANoStop        = -3 // 交管不停靠
-	ETANotOperating  = -4 // 未營運
+	ETANotDeparted  = -1 // 未發車
+	ETALastBusLeft  = -2 // 末班車已駛離
+	ETANoStop       = -3 // 交管不停靠
+	ETANotOperating = -4 // 未營運
 )
 
 type Route struct {
@@ -34,8 +34,12 @@ type StopETA struct {
 	StopName string `json:"stopName"`
 	Sequence int    `json:"sequence"`
 	ETA      int    `json:"eta"`
-	Buses    []Bus  `json:"buses"`
-	Source   string `json:"source"`
+	// Buses are currently stopped at this stop.
+	Buses []Bus `json:"buses"`
+	// DepartedBuses have left this stop and are on their way to the next one.
+	// Empty for providers whose upstream does not distinguish the two (e.g. TDX).
+	DepartedBuses []Bus  `json:"departedBuses"`
+	Source        string `json:"source"`
 }
 
 // BusDataSource defines the interface for bus data providers.

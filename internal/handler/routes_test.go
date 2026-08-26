@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -103,6 +104,52 @@ func TestGetETA_Success(t *testing.T) {
 	}
 	if resp.Stops[1].ETA != model.ETANotDeparted {
 		t.Errorf("expected eta %d, got %d", model.ETANotDeparted, resp.Stops[1].ETA)
+	}
+}
+
+// The ETA response must carry departedBuses through to the client, attached to
+// the stop the bus left rather than the one it is heading to.
+func TestGetETA_DepartedBuses(t *testing.T) {
+	primary := &mockProvider{
+		etas: []model.StopETA{
+			{StopName: "站A", Sequence: 1, ETA: 180, Source: "ebus",
+				DepartedBuses: []model.Bus{{PlateNumb: "KKB-1789"}}},
+			{StopName: "站B", Sequence: 2, ETA: 60, Source: "ebus",
+				Buses: []model.Bus{{PlateNumb: "EAL-5812"}}},
+		},
+	}
+	h := setupHandlers(primary, nil)
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /api/routes/{routeId}/eta", h.GetETA)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/routes/R1/eta?gb=0", nil)
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	body := w.Body.Bytes()
+	if !bytes.Contains(body, []byte(`"departedBuses"`)) {
+		t.Errorf("response must include departedBuses field, got %s", body)
+	}
+
+	var resp ETAResponse
+	if err := json.Unmarshal(body, &resp); err != nil {
+		t.Fatal(err)
+	}
+	if len(resp.Stops[0].DepartedBuses) != 1 ||
+		resp.Stops[0].DepartedBuses[0].PlateNumb != "KKB-1789" {
+		t.Errorf("stop 1 departedBuses = %v, want [KKB-1789]", resp.Stops[0].DepartedBuses)
+	}
+	if len(resp.Stops[0].Buses) != 0 {
+		t.Errorf("stop 1 buses = %v, want empty", resp.Stops[0].Buses)
+	}
+	// The departed bus must not be moved onto the following stop.
+	if len(resp.Stops[1].DepartedBuses) != 0 {
+		t.Errorf("stop 2 departedBuses = %v, want empty", resp.Stops[1].DepartedBuses)
+	}
+	if len(resp.Stops[1].Buses) != 1 ||
+		resp.Stops[1].Buses[0].PlateNumb != "EAL-5812" {
+		t.Errorf("stop 2 buses = %v, want [EAL-5812]", resp.Stops[1].Buses)
 	}
 }
 
