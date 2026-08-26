@@ -22,7 +22,13 @@ export interface StopETA {
   stopName: string;
   sequence: number;
   eta: number;
+  /** Buses currently stopped at this stop. */
   buses: Bus[];
+  /**
+   * Buses that already left this stop and are on their way to the next one.
+   * Empty for providers whose upstream does not distinguish the two (TDX).
+   */
+  departedBuses?: Bus[];
   source: string;
 }
 

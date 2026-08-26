@@ -146,3 +146,71 @@ describe("StopList countdown", () => {
     expect(screen.getByText("未發車")).toBeInTheDocument();
   });
 });
+
+describe("StopList bus markers", () => {
+  const threeStops: Stop[] = [
+    { stopId: "s1", stopName: "台北車站", sequence: 1 },
+    { stopId: "s2", stopName: "中山站", sequence: 2 },
+    { stopId: "s3", stopName: "民權西路", sequence: 3 },
+  ];
+
+  it("shows a departed bus between its stop and the next one", () => {
+    // The bug this guards: a bus that left stop 1 used to vanish entirely,
+    // leaving stop 2 showing 「將到站」 with no plate anywhere.
+    const etas: StopETA[] = [
+      { ...makeEta(1, 300), departedBuses: [{ plateNumb: "KKB-1789" }] },
+      makeEta(2, 120),
+    ];
+    render(<StopList stops={threeStops} etas={etas} />);
+
+    expect(screen.getByTestId("bus-between")).toBeInTheDocument();
+    expect(screen.queryByTestId("bus-at-stop")).not.toBeInTheDocument();
+    expect(screen.getByText("KKB-1789")).toBeInTheDocument();
+    expect(
+      screen.getByText("KKB-1789 已駛離 台北車站，前往下一站"),
+    ).toBeInTheDocument();
+  });
+
+  it("shows both markers when a stop has an arriving and a departed bus", () => {
+    const etas: StopETA[] = [
+      {
+        ...makeEta(1, 30),
+        buses: [{ plateNumb: "EAL-5812" }],
+        departedBuses: [{ plateNumb: "KKA-0161" }, { plateNumb: "KKB-1785" }],
+      },
+    ];
+    render(<StopList stops={threeStops} etas={etas} />);
+
+    expect(screen.getByTestId("bus-at-stop")).toBeInTheDocument();
+    expect(screen.getByTestId("bus-between")).toBeInTheDocument();
+    expect(screen.getByText("EAL-5812")).toBeInTheDocument();
+    expect(screen.getByText("KKA-0161, KKB-1785")).toBeInTheDocument();
+  });
+
+  it("still shows a departed bus on the final stop", () => {
+    const etas: StopETA[] = [
+      { ...makeEta(3, 60), departedBuses: [{ plateNumb: "EAL-5290" }] },
+    ];
+    render(<StopList stops={threeStops} etas={etas} />);
+
+    expect(screen.getByTestId("bus-between")).toBeInTheDocument();
+    expect(screen.getByText("EAL-5290")).toBeInTheDocument();
+  });
+
+  it("draws no bus icon when a stop has neither arriving nor departed buses", () => {
+    render(<StopList stops={threeStops} etas={[makeEta(1, 300)]} />);
+
+    expect(screen.queryByTestId("bus-at-stop")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("bus-between")).not.toBeInTheDocument();
+  });
+
+  it("handles a TDX response with no departedBuses field at all", () => {
+    const etas: StopETA[] = [
+      { ...makeEta(1, 60), buses: [{ plateNumb: "ABC-1234" }] },
+    ];
+    render(<StopList stops={threeStops} etas={etas} />);
+
+    expect(screen.getByTestId("bus-at-stop")).toBeInTheDocument();
+    expect(screen.queryByTestId("bus-between")).not.toBeInTheDocument();
+  });
+});

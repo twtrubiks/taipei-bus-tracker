@@ -7,6 +7,7 @@ import { AlertBell, AlertMenu } from "../components/AlertButton";
 import DataFreshness from "../components/DataFreshness";
 import { searchRoutes, getStops } from "../api/client";
 import { statusColor } from "../utils/statusColor";
+import { plateText } from "../utils/plates";
 import { etaStatus } from "../utils/etaStatus";
 import { countdownEta } from "../utils/countdown";
 import { useTick } from "../hooks/useTick";
@@ -157,8 +158,8 @@ export default function HomePage() {
                       {displayEta === undefined ? "—" : etaStatus(displayEta)}
                     </span>
                     {eta?.buses && eta.buses.length > 0 && (
-                      <span className="text-xs text-gray-400">
-                        {eta.buses.map((b) => b.plateNumb).join(", ")}
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {plateText(eta.buses)}
                       </span>
                     )}
                     <AlertBell
